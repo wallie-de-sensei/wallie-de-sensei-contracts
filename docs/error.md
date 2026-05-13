@@ -29,6 +29,8 @@ treasury tooling) can use this reference to handle protocol exceptions correctly
 | `TemplateNotFound` | 15 | No template exists for the given template id | `get_stream_template`, `create_stream_from_template`, `delete_stream_template` |
 | `TemplateLimitExceeded` | 16 | Template registry limits exceeded | `register_stream_template` |
 | `TemplateUnauthorized` | 17 | Caller is not the template owner | `delete_stream_template` |
+| `SignatureDeadlineExpired` | 18 | Delegated-withdrawal signature deadline has passed | `delegated_withdraw_to` |
+| `InvalidSignature` | 19 | Delegated-withdrawal signature does not verify against the recipient's key | `delegated_withdraw_to` |
 
 ---
 

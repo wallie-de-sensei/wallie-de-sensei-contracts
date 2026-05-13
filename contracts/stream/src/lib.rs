@@ -6,8 +6,8 @@ mod accrual;
 mod checksum;
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, token, xdr::ToXdr, Address, Bytes,
-    BytesN, Env,
+    contract, contractimpl, contracttype, symbol_short, token, xdr::ToXdr, Address, Bytes, BytesN,
+    Env,
 };
 
 // ---------------------------------------------------------------------------
@@ -33,8 +33,6 @@ const PERSISTENT_BUMP_AMOUNT: u32 = 120_960;
 /// All paginated entrypoints enforce this limit strictly.
 pub const MAX_PAGE_SIZE: u64 = 100;
 
-<<<<<<< HEAD
-=======
 /// Maximum memo payload size in bytes (stream metadata for indexers).
 pub const MAX_MEMO_BYTES: usize = 64;
 
@@ -43,7 +41,7 @@ pub const MAX_TEMPLATES_PER_OWNER: u32 = 64;
 /// Global bound on stored schedule templates (DoS / storage bloat prevention).
 pub const MAX_GLOBAL_TEMPLATES: u64 = 10_000;
 
->>>>>>> upstream/main
+// ---------------------------------------------------------------------------
 // Contract version
 // ---------------------------------------------------------------------------
 
@@ -403,7 +401,6 @@ pub struct Stream {
     /// Maximum length: `MAX_MEMO_BYTES` (64 bytes). `None` when not supplied.
     pub memo: Option<soroban_sdk::Bytes>,
 }
-
 
 /// Pagination result for recipient stream listing
 #[contracttype]
@@ -2537,6 +2534,7 @@ impl FluxoraStream {
     /// There is no further accrual possible. Returning `deposit_amount` is the
     /// deterministic, timestamp-independent answer for any UI or downstream caller.
     pub fn calculate_accrued(env: Env, stream_id: u64) -> Result<i128, ContractError> {
+        bump_instance_ttl(&env);
         let stream = load_stream(&env, stream_id)?;
 
         if stream.status == StreamStatus::Completed {
@@ -2580,6 +2578,7 @@ impl FluxoraStream {
     /// # Errors
     /// - Returns `ContractError::StreamNotFound` if the stream does not exist.
     pub fn get_withdrawable(env: Env, stream_id: u64) -> Result<i128, ContractError> {
+        bump_instance_ttl(&env);
         let stream = load_stream(&env, stream_id)?;
 
         // If the stream is completed or paused, withdrawals are not allowed.
@@ -2740,8 +2739,10 @@ impl FluxoraStream {
         bump_instance_ttl(&env);
 
         // Emit event with old and new admin addresses
-        env.events()
-            .publish((soroban_sdk::Symbol::new(&env, "AdminUpdated"),), (old_admin, new_admin));
+        env.events().publish(
+            (soroban_sdk::Symbol::new(&env, "AdminUpdated"),),
+            (old_admin, new_admin),
+        );
 
         Ok(())
     }
@@ -2781,6 +2782,7 @@ impl FluxoraStream {
     ///   - `Completed`: All tokens withdrawn, terminal state
     ///   - `Cancelled`: Terminated early, unstreamed tokens refunded, terminal state
     pub fn get_stream_state(env: Env, stream_id: u64) -> Result<Stream, ContractError> {
+        bump_instance_ttl(&env);
         load_stream(&env, stream_id)
     }
 
@@ -3516,8 +3518,11 @@ impl FluxoraStream {
     /// This allows pre-flight version checks during deployment pipelines.
     ///
     /// # Gas
-    /// Minimal — no storage reads, no token interactions.
-    pub fn version(_env: Env) -> u32 {
+    /// Minimal — only bumps instance TTL so the contract entry stays alive on read.
+    pub fn version(env: Env) -> u32 {
+        // Bump instance TTL so a contract that is only being polled for `version()`
+        // does not have its instance entry archived.
+        bump_instance_ttl(&env);
         CONTRACT_VERSION
     }
 
@@ -3561,6 +3566,7 @@ impl FluxoraStream {
     /// - Paginate: fetch first N IDs, then call `get_stream_state` for each
     /// - Filter by status: fetch all IDs, then check status of each via `get_stream_state`
     pub fn get_recipient_streams(env: Env, recipient: Address) -> soroban_sdk::Vec<u64> {
+        bump_instance_ttl(&env);
         load_recipient_streams(&env, &recipient)
     }
 
@@ -3582,6 +3588,7 @@ impl FluxoraStream {
     /// - Combine with `get_recipient_streams` for pagination
     /// - Closed streams are not included in the count
     pub fn get_recipient_stream_count(env: Env, recipient: Address) -> u64 {
+        bump_instance_ttl(&env);
         load_recipient_streams(&env, &recipient).len() as u64
     }
 

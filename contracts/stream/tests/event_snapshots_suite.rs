@@ -1,5 +1,5 @@
 /// Event Snapshot Tests
-/// 
+///
 /// This module contains comprehensive deterministic snapshot tests that assert exact event
 /// topics and payload shapes for all emitted events. Each test captures event data at
 /// specific ledger points and verifies the shape against the contract's event schema
@@ -26,27 +26,28 @@
 /// - No event on revert: Operations that fail emit no events
 /// - No withdraw event when amount == 0: Only positive withdrawals emit events
 /// - Completed after withdrew: Completion emitted after withdrawal in correct order
-
 extern crate std;
 
 use fluxora_stream::{
-    ContractError, CreateStreamParams, FluxoraStream, FluxoraStreamClient, StreamStatus,
-    PauseReason, StreamPaused, Withdrawal, WithdrawalTo, RateUpdated, StreamEndShortened,
-    StreamEndExtended, StreamToppedUp, RecipientUpdated, StreamCreated,
+    ContractPauseChanged, FluxoraStream, FluxoraStreamClient, PauseReason, RateUpdated,
+    RecipientUpdated, StreamCreated, StreamEndExtended, StreamEndShortened, StreamPaused,
+    StreamToppedUp, Withdrawal, WithdrawalTo,
 };
 use soroban_sdk::{
     testutils::{Address as _, Events, Ledger},
     token::{Client as TokenClient, StellarAssetClient},
-    vec, Address, Env, FromVal, IntoVal, Symbol,
+    Address, Env, Symbol, TryFromVal,
 };
 
 struct EventTestContext<'a> {
     env: Env,
     contract_id: Address,
+    #[allow(dead_code)]
     token_id: Address,
     admin: Address,
     sender: Address,
     recipient: Address,
+    #[allow(dead_code)]
     token: TokenClient<'a>,
 }
 
@@ -91,12 +92,19 @@ impl<'a> EventTestContext<'a> {
     }
 
     /// Extract first event topic as a symbol (normalized)
-    fn get_first_topic_symbol(&self, event: &(Address, soroban_sdk::Vec<soroban_sdk::Val>)) -> Option<String> {
+    fn get_first_topic_symbol(
+        &self,
+        event: &(
+            Address,
+            soroban_sdk::Vec<soroban_sdk::Val>,
+            soroban_sdk::Val,
+        ),
+    ) -> Option<String> {
         if event.0 != self.contract_id {
             return None;
         }
-        if let Ok(topics) = event.1.iter().next() {
-            if let Ok(sym) = Symbol::try_from_val(&self.env, &topics) {
+        if let Some(topic_val) = event.1.iter().next() {
+            if let Ok(sym) = Symbol::try_from_val(&self.env, &topic_val) {
                 return Some(sym.to_string());
             }
         }
@@ -104,11 +112,18 @@ impl<'a> EventTestContext<'a> {
     }
 
     /// Extract second event topic as u64 if it exists
-    fn get_second_topic_u64(&self, event: &(Address, soroban_sdk::Vec<soroban_sdk::Val>)) -> Option<u64> {
+    fn get_second_topic_u64(
+        &self,
+        event: &(
+            Address,
+            soroban_sdk::Vec<soroban_sdk::Val>,
+            soroban_sdk::Val,
+        ),
+    ) -> Option<u64> {
         if event.0 != self.contract_id {
             return None;
         }
-        if let Some(Ok(topic_val)) = event.1.iter().nth(1) {
+        if let Some(topic_val) = event.1.iter().nth(1) {
             if let Ok(stream_id) = u64::try_from_val(&self.env, &topic_val) {
                 return Some(stream_id);
             }
@@ -117,12 +132,19 @@ impl<'a> EventTestContext<'a> {
     }
 
     /// Extract event data payload
-    fn get_event_data(&self, event: &(Address, soroban_sdk::Vec<soroban_sdk::Val>)) -> Option<soroban_sdk::Val> {
+    fn get_event_data(
+        &self,
+        event: &(
+            Address,
+            soroban_sdk::Vec<soroban_sdk::Val>,
+            soroban_sdk::Val,
+        ),
+    ) -> Option<soroban_sdk::Val> {
         if event.0 != self.contract_id {
             return None;
         }
-        // Data is the last element (after all topics)
-        event.1.last()
+        // Data is the third element of the tuple
+        Some(event.2)
     }
 }
 
@@ -136,7 +158,7 @@ fn event_snapshot_stream_created_has_correct_topics_and_payload() {
     ctx.env.ledger().set_timestamp(0);
 
     let events_before = ctx.env.events().all().len();
-    
+
     let stream_id = ctx.client().create_stream(
         &ctx.sender,
         &ctx.recipient,
@@ -177,7 +199,7 @@ fn event_snapshot_stream_created_has_correct_topics_and_payload() {
                     if let Some(data) = ctx.get_event_data(&event) {
                         let stream_created = StreamCreated::try_from_val(&ctx.env, &data)
                             .expect("Data must deserialize to StreamCreated");
-                        
+
                         assert_eq!(stream_created.stream_id, stream_id);
                         assert_eq!(stream_created.sender, ctx.sender);
                         assert_eq!(stream_created.recipient, ctx.recipient);
@@ -188,7 +210,7 @@ fn event_snapshot_stream_created_has_correct_topics_and_payload() {
                         assert_eq!(stream_created.end_time, 1000);
                         assert_eq!(stream_created.withdraw_dust_threshold, 0);
                         assert!(stream_created.memo.is_none());
-                        
+
                         found_created = true;
                     }
                 }
@@ -196,7 +218,10 @@ fn event_snapshot_stream_created_has_correct_topics_and_payload() {
         }
     }
 
-    assert!(found_created, "StreamCreated event with correct schema must be found");
+    assert!(
+        found_created,
+        "StreamCreated event with correct schema must be found"
+    );
 }
 
 #[test]
@@ -204,10 +229,7 @@ fn event_snapshot_stream_created_with_memo() {
     let ctx = EventTestContext::setup();
     ctx.env.ledger().set_timestamp(0);
 
-    let memo = Some(soroban_sdk::Bytes::from_slice(
-        &ctx.env,
-        b"payroll-2024-q1",
-    ));
+    let memo = Some(soroban_sdk::Bytes::from_slice(&ctx.env, b"payroll-2024-q1"));
     let events_before = ctx.env.events().all().len();
 
     let _stream_id = ctx.client().create_stream(
@@ -236,13 +258,14 @@ fn event_snapshot_stream_created_with_memo() {
                 if let Some(data) = ctx.get_event_data(&event) {
                     let stream_created = StreamCreated::try_from_val(&ctx.env, &data)
                         .expect("Data must deserialize to StreamCreated");
-                    
+
                     assert!(
                         stream_created.memo.is_some(),
                         "Memo must be present in event"
                     );
                     let memo_bytes = stream_created.memo.unwrap();
-                    assert_eq!(memo_bytes.as_slice(), b"payroll-2024-q1");
+                    let expected = soroban_sdk::Bytes::from_slice(&ctx.env, b"payroll-2024-q1");
+                    assert_eq!(memo_bytes, expected);
                     found = true;
                 }
             }
@@ -275,7 +298,7 @@ fn event_snapshot_withdrawal_has_correct_topics_and_payload() {
 
     ctx.env.ledger().set_timestamp(500);
     let events_before = ctx.env.events().all().len();
-    
+
     let withdrawn_amount = ctx.client().withdraw(&stream_id);
 
     let events = ctx.env.events().all();
@@ -297,11 +320,11 @@ fn event_snapshot_withdrawal_has_correct_topics_and_payload() {
                     if let Some(data) = ctx.get_event_data(&event) {
                         let withdrawal = Withdrawal::try_from_val(&ctx.env, &data)
                             .expect("Data must deserialize to Withdrawal");
-                        
+
                         assert_eq!(withdrawal.stream_id, stream_id);
                         assert_eq!(withdrawal.recipient, ctx.recipient);
                         assert_eq!(withdrawal.amount, 500);
-                        
+
                         found_withdrew = true;
                     }
                 }
@@ -309,7 +332,10 @@ fn event_snapshot_withdrawal_has_correct_topics_and_payload() {
         }
     }
 
-    assert!(found_withdrew, "Withdrawal event with correct schema must be found");
+    assert!(
+        found_withdrew,
+        "Withdrawal event with correct schema must be found"
+    );
 }
 
 #[test]
@@ -332,7 +358,7 @@ fn event_snapshot_no_withdrawal_event_when_amount_zero() {
     // Try to withdraw before cliff - amount should be 0
     ctx.env.ledger().set_timestamp(100);
     let events_before = ctx.env.events().all().len();
-    
+
     let withdrawn = ctx.client().withdraw(&stream_id);
     assert_eq!(withdrawn, 0, "Withdrawal before cliff must return 0");
 
@@ -378,7 +404,7 @@ fn event_snapshot_withdrawal_to_has_correct_topics_and_payload() {
     let destination = Address::generate(&ctx.env);
     ctx.env.ledger().set_timestamp(400);
     let events_before = ctx.env.events().all().len();
-    
+
     let withdrawn = ctx.client().withdraw_to(&stream_id, &destination);
 
     let events = ctx.env.events().all();
@@ -399,12 +425,12 @@ fn event_snapshot_withdrawal_to_has_correct_topics_and_payload() {
                     if let Some(data) = ctx.get_event_data(&event) {
                         let withdrawal_to = WithdrawalTo::try_from_val(&ctx.env, &data)
                             .expect("Data must deserialize to WithdrawalTo");
-                        
+
                         assert_eq!(withdrawal_to.stream_id, stream_id);
                         assert_eq!(withdrawal_to.recipient, ctx.recipient);
                         assert_eq!(withdrawal_to.destination, destination);
                         assert_eq!(withdrawal_to.amount, 400);
-                        
+
                         found_wdraw_to = true;
                     }
                 }
@@ -412,7 +438,10 @@ fn event_snapshot_withdrawal_to_has_correct_topics_and_payload() {
         }
     }
 
-    assert!(found_wdraw_to, "WithdrawalTo event with correct schema must be found");
+    assert!(
+        found_wdraw_to,
+        "WithdrawalTo event with correct schema must be found"
+    );
 }
 
 // =====================================================================
@@ -437,7 +466,8 @@ fn event_snapshot_stream_paused_has_correct_topics_and_payload() {
     );
 
     let events_before = ctx.env.events().all().len();
-    ctx.client().pause_stream(&stream_id, &PauseReason::Operational);
+    ctx.client()
+        .pause_stream(&stream_id, &PauseReason::Operational);
 
     let events = ctx.env.events().all();
     let mut found_paused = false;
@@ -456,10 +486,10 @@ fn event_snapshot_stream_paused_has_correct_topics_and_payload() {
                     if let Some(data) = ctx.get_event_data(&event) {
                         let stream_paused = StreamPaused::try_from_val(&ctx.env, &data)
                             .expect("Data must deserialize to StreamPaused");
-                        
+
                         assert_eq!(stream_paused.stream_id, stream_id);
                         assert_eq!(stream_paused.reason, PauseReason::Operational);
-                        
+
                         found_paused = true;
                     }
                 }
@@ -467,7 +497,10 @@ fn event_snapshot_stream_paused_has_correct_topics_and_payload() {
         }
     }
 
-    assert!(found_paused, "StreamPaused event with correct schema must be found");
+    assert!(
+        found_paused,
+        "StreamPaused event with correct schema must be found"
+    );
 }
 
 #[test]
@@ -488,7 +521,8 @@ fn event_snapshot_stream_paused_as_admin_has_administrative_reason() {
     );
 
     let events_before = ctx.env.events().all().len();
-    ctx.client().pause_stream_as_admin(&stream_id, &PauseReason::Administrative);
+    ctx.client()
+        .pause_stream_as_admin(&stream_id, &PauseReason::Administrative);
 
     let events = ctx.env.events().all();
     let mut found_admin_paused = false;
@@ -504,7 +538,7 @@ fn event_snapshot_stream_paused_as_admin_has_administrative_reason() {
                 if let Some(data) = ctx.get_event_data(&event) {
                     let stream_paused = StreamPaused::try_from_val(&ctx.env, &data)
                         .expect("Data must deserialize to StreamPaused");
-                    
+
                     assert_eq!(stream_paused.reason, PauseReason::Administrative);
                     found_admin_paused = true;
                 }
@@ -535,8 +569,9 @@ fn event_snapshot_stream_resumed_has_correct_topics() {
         &None,
     );
 
-    ctx.client().pause_stream(&stream_id, &PauseReason::Operational);
-    
+    ctx.client()
+        .pause_stream(&stream_id, &PauseReason::Operational);
+
     let events_before = ctx.env.events().all().len();
     ctx.client().resume_stream(&stream_id);
 
@@ -647,9 +682,9 @@ fn event_snapshot_stream_completed_emitted_after_withdrew() {
 
         if let Some(sym) = ctx.get_first_topic_symbol(&event) {
             if sym == "withdrew" && withdrew_idx.is_none() {
-                withdrew_idx = Some(i);
+                withdrew_idx = Some(i as usize);
             } else if sym == "completed" && completed_idx.is_none() {
-                completed_idx = Some(i);
+                completed_idx = Some(i as usize);
             }
         }
     }
@@ -717,10 +752,11 @@ fn event_snapshot_rate_updated_has_correct_topics_and_payload() {
     let ctx = EventTestContext::setup();
     ctx.env.ledger().set_timestamp(0);
 
+    // Deposit enough to support rate increase from 1/s to 2/s over 1000s.
     let stream_id = ctx.client().create_stream(
         &ctx.sender,
         &ctx.recipient,
-        &1000_i128,
+        &2000_i128,
         &1_i128,
         &0u64,
         &0u64,
@@ -731,7 +767,7 @@ fn event_snapshot_rate_updated_has_correct_topics_and_payload() {
 
     ctx.env.ledger().set_timestamp(100);
     let events_before = ctx.env.events().all().len();
-    
+
     ctx.client().update_rate_per_second(&stream_id, &2_i128);
 
     let events = ctx.env.events().all();
@@ -751,12 +787,12 @@ fn event_snapshot_rate_updated_has_correct_topics_and_payload() {
                     if let Some(data) = ctx.get_event_data(&event) {
                         let rate_updated = RateUpdated::try_from_val(&ctx.env, &data)
                             .expect("Data must deserialize to RateUpdated");
-                        
+
                         assert_eq!(rate_updated.stream_id, stream_id);
                         assert_eq!(rate_updated.old_rate_per_second, 1);
                         assert_eq!(rate_updated.new_rate_per_second, 2);
                         assert_eq!(rate_updated.effective_time, 100);
-                        
+
                         found_rate_updated = true;
                     }
                 }
@@ -764,7 +800,10 @@ fn event_snapshot_rate_updated_has_correct_topics_and_payload() {
         }
     }
 
-    assert!(found_rate_updated, "RateUpdated event with correct schema must be found");
+    assert!(
+        found_rate_updated,
+        "RateUpdated event with correct schema must be found"
+    );
 }
 
 #[test]
@@ -804,12 +843,12 @@ fn event_snapshot_stream_end_shortened_has_correct_topics_and_payload() {
                     if let Some(data) = ctx.get_event_data(&event) {
                         let end_shortened = StreamEndShortened::try_from_val(&ctx.env, &data)
                             .expect("Data must deserialize to StreamEndShortened");
-                        
+
                         assert_eq!(end_shortened.stream_id, stream_id);
                         assert_eq!(end_shortened.old_end_time, 1000);
                         assert_eq!(end_shortened.new_end_time, 500);
                         assert_eq!(end_shortened.refund_amount, 500);
-                        
+
                         found_end_shortened = true;
                     }
                 }
@@ -828,10 +867,11 @@ fn event_snapshot_stream_end_extended_has_correct_topics_and_payload() {
     let ctx = EventTestContext::setup();
     ctx.env.ledger().set_timestamp(0);
 
+    // Deposit enough to support extending end_time from 1000 to 2000 at rate 1/s.
     let stream_id = ctx.client().create_stream(
         &ctx.sender,
         &ctx.recipient,
-        &1000_i128,
+        &2000_i128,
         &1_i128,
         &0u64,
         &0u64,
@@ -860,11 +900,11 @@ fn event_snapshot_stream_end_extended_has_correct_topics_and_payload() {
                     if let Some(data) = ctx.get_event_data(&event) {
                         let end_extended = StreamEndExtended::try_from_val(&ctx.env, &data)
                             .expect("Data must deserialize to StreamEndExtended");
-                        
+
                         assert_eq!(end_extended.stream_id, stream_id);
                         assert_eq!(end_extended.old_end_time, 1000);
                         assert_eq!(end_extended.new_end_time, 2000);
-                        
+
                         found_end_extended = true;
                     }
                 }
@@ -900,7 +940,8 @@ fn event_snapshot_stream_topped_up_has_correct_topics_and_payload() {
     );
 
     let events_before = ctx.env.events().all().len();
-    ctx.client().top_up_stream(&stream_id, &ctx.sender, &500_i128);
+    ctx.client()
+        .top_up_stream(&stream_id, &ctx.sender, &500_i128);
 
     let events = ctx.env.events().all();
     let mut found_topped_up = false;
@@ -919,11 +960,11 @@ fn event_snapshot_stream_topped_up_has_correct_topics_and_payload() {
                     if let Some(data) = ctx.get_event_data(&event) {
                         let topped_up = StreamToppedUp::try_from_val(&ctx.env, &data)
                             .expect("Data must deserialize to StreamToppedUp");
-                        
+
                         assert_eq!(topped_up.stream_id, stream_id);
                         assert_eq!(topped_up.top_up_amount, 500);
                         assert_eq!(topped_up.new_deposit_amount, 1500);
-                        
+
                         found_topped_up = true;
                     }
                 }
@@ -956,9 +997,8 @@ fn event_snapshot_recipient_updated_has_correct_topics_and_payload() {
 
     let new_recipient = Address::generate(&ctx.env);
     let events_before = ctx.env.events().all().len();
-    
-    ctx.client()
-        .update_recipient(&stream_id, &ctx.recipient, &new_recipient);
+
+    ctx.client().update_recipient(&stream_id, &new_recipient);
 
     let events = ctx.env.events().all();
     let mut found_recipient_updated = false;
@@ -977,11 +1017,11 @@ fn event_snapshot_recipient_updated_has_correct_topics_and_payload() {
                     if let Some(data) = ctx.get_event_data(&event) {
                         let recipient_updated = RecipientUpdated::try_from_val(&ctx.env, &data)
                             .expect("Data must deserialize to RecipientUpdated");
-                        
+
                         assert_eq!(recipient_updated.stream_id, stream_id);
                         assert_eq!(recipient_updated.old_recipient, ctx.recipient);
                         assert_eq!(recipient_updated.new_recipient, new_recipient);
-                        
+
                         found_recipient_updated = true;
                     }
                 }
@@ -1005,7 +1045,7 @@ fn event_snapshot_admin_updated_has_correct_topics_and_payload() {
 
     let new_admin = Address::generate(&ctx.env);
     let events_before = ctx.env.events().all().len();
-    
+
     ctx.client().set_admin(&new_admin);
 
     let events = ctx.env.events().all();
@@ -1017,22 +1057,19 @@ fn event_snapshot_admin_updated_has_correct_topics_and_payload() {
             continue;
         }
 
-        // AdminUpdated uses topics ["admin", "updated"] - check both topics
-        if let Ok(topics_vec) = event.1.clone() {
-            if topics_vec.len() >= 2 {
-                if let Ok(first_sym) = Symbol::try_from_val(&ctx.env, &topics_vec.get(0).unwrap()) {
-                    if let Ok(second_sym) = Symbol::try_from_val(&ctx.env, &topics_vec.get(1).unwrap()) {
-                        if first_sym.to_string() == "admin" && second_sym.to_string() == "updated" {
-                            if let Some(data) = ctx.get_event_data(&event) {
-                                // AdminUpdated payload is a tuple (old_admin, new_admin)
-                                if let Ok((old_admin, new_admin_from_event)) =
-                                    <(Address, Address)>::try_from_val(&ctx.env, &data)
-                                {
-                                    assert_eq!(old_admin, ctx.admin);
-                                    assert_eq!(new_admin_from_event, new_admin);
-                                    found_admin_updated = true;
-                                }
-                            }
+        // AdminUpdated uses single topic ["AdminUpdated"]
+        let topics_vec = event.1.clone();
+        if let Some(topic_val) = topics_vec.iter().next() {
+            if let Ok(first_sym) = Symbol::try_from_val(&ctx.env, &topic_val) {
+                if first_sym.to_string() == "AdminUpdated" {
+                    if let Some(data) = ctx.get_event_data(&event) {
+                        // AdminUpdated payload is a tuple (old_admin, new_admin)
+                        if let Ok((old_admin, new_admin_from_event)) =
+                            <(Address, Address)>::try_from_val(&ctx.env, &data)
+                        {
+                            assert_eq!(old_admin, ctx.admin);
+                            assert_eq!(new_admin_from_event, new_admin);
+                            found_admin_updated = true;
                         }
                     }
                 }
@@ -1069,8 +1106,8 @@ fn event_snapshot_contract_paused_has_correct_topics_and_payload() {
         if let Some(sym) = ctx.get_first_topic_symbol(&event) {
             if sym == "paused_ctl" {
                 if let Some(data) = ctx.get_event_data(&event) {
-                    if let Ok(paused_val) = bool::try_from_val(&ctx.env, &data) {
-                        assert_eq!(paused_val, true);
+                    if let Ok(payload) = ContractPauseChanged::try_from_val(&ctx.env, &data) {
+                        assert!(payload.paused);
                         found_paused_ctl = true;
                     }
                 }
@@ -1105,8 +1142,8 @@ fn event_snapshot_contract_resumed_has_correct_topics() {
         if let Some(sym) = ctx.get_first_topic_symbol(&event) {
             if sym == "paused_ctl" {
                 if let Some(data) = ctx.get_event_data(&event) {
-                    if let Ok(paused_val) = bool::try_from_val(&ctx.env, &data) {
-                        assert_eq!(paused_val, false);
+                    if let Ok(payload) = ContractPauseChanged::try_from_val(&ctx.env, &data) {
+                        assert!(!payload.paused);
                         found_paused_ctl = true;
                     }
                 }
@@ -1144,7 +1181,10 @@ fn event_snapshot_no_events_on_failed_create_stream() {
         &None,
     );
 
-    assert!(result.is_err(), "Stream creation should fail with insufficient deposit");
+    assert!(
+        result.is_err(),
+        "Stream creation should fail with insufficient deposit"
+    );
 
     let events = ctx.env.events().all();
     let mut saw_created = false;
@@ -1190,7 +1230,9 @@ fn event_snapshot_no_events_on_failed_operations() {
     ctx.client().withdraw(&stream_id);
 
     let events_before = ctx.env.events().all().len();
-    let result = ctx.client().try_pause_stream(&stream_id, &PauseReason::Operational);
+    let result = ctx
+        .client()
+        .try_pause_stream(&stream_id, &PauseReason::Operational);
 
     assert!(result.is_err(), "Pause of completed stream should fail");
 
