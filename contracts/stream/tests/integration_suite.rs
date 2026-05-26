@@ -4576,7 +4576,7 @@ fn batch_deposit_sum_just_under_overflow_succeeds() {
 
     // This should succeed since we have sufficient balance and no overflow
     let result = ctx.client().create_streams(&ctx.sender, &streams);
-    
+
     // Should succeed and return 2 stream IDs
     assert_eq!(result.len(), 2);
 }
