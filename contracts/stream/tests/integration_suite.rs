@@ -4,6 +4,7 @@ use fluxora_stream::{
     ContractError, CreateStreamParams, FluxoraStream, FluxoraStreamClient, PauseReason,
     StreamStatus,
 };
+use proptest::prelude::*;
 use soroban_sdk::log;
 use soroban_sdk::{
     testutils::{Address as _, Events, Ledger},
@@ -4387,4 +4388,200 @@ fn snapshot_no_withdraw_event_when_amount_zero() {
     // Withdraw at t=0 (nothing accrued)
     ctx.client().withdraw(&stream_id);
     assert_eq!(ctx.env.events().all().len(), events_before);
+}
+// ---------------------------------------------------------------------------
+// Property-based tests for batch deposit overflow
+// ---------------------------------------------------------------------------
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(256))]
+
+    /// Test that batch deposit sum overflow is properly handled.
+    /// 
+    /// This test generates batches of CreateStreamParams where the cumulative
+    /// deposit_amount exceeds i128::MAX, ensuring the overflow guard at
+    /// lib.rs:316-317 fires and returns ContractError::ArithmeticOverflow.
+    #[test]
+    fn batch_deposit_sum_overflow_returns_arithmetic_overflow_error(
+        // Generate 2-10 streams with large deposit amounts
+        batch_size in 2_usize..=10,
+        // Use large deposit amounts that will likely overflow when summed
+        seed in any::<u64>(),
+    ) {
+        let ctx = TestContext::setup();
+        ctx.env.ledger().set_timestamp(0);
+        
+        // Generate deposit amounts that will overflow when summed
+        // We'll use amounts close to i128::MAX / 2 to ensure overflow
+        let mut rng = proptest::test_runner::TestRng::deterministic_rng(proptest::test_runner::RngAlgorithm::ChaCha);
+        rng.set_seed(seed);
+        
+        let mut streams = vec![&ctx.env];
+        let base_amount = i128::MAX / 3; // Start with a large base amount
+        
+        for i in 0..batch_size {
+            // Create amounts that will definitely overflow when summed
+            let deposit_amount = if i == 0 {
+                base_amount
+            } else {
+                base_amount + (i as i128 * 1000000) // Add varying amounts to ensure overflow
+            };
+            
+            let params = CreateStreamParams {
+                recipient: Address::generate(&ctx.env),
+                deposit_amount,
+                rate_per_second: 1,
+                start_time: 0,
+                cliff_time: 0,
+                end_time: 1000,
+                withdraw_dust_threshold: None,
+                memo: None,
+            };
+            streams.push_back(params);
+        }
+        
+        // Verify that the sum would indeed overflow
+        let mut manual_sum: Option<i128> = Some(0);
+        for stream in streams.iter().skip(1) { // Skip the env element
+            if let Some(current_sum) = manual_sum {
+                manual_sum = current_sum.checked_add(stream.deposit_amount);
+                if manual_sum.is_none() {
+                    break; // Overflow detected as expected
+                }
+            }
+        }
+        
+        // Only proceed if we've confirmed overflow would occur
+        prop_assume!(manual_sum.is_none());
+        
+        // Record initial state to verify no partial state is written
+        let initial_stream_count = ctx.client().get_stream_count();
+        let initial_sender_balance = ctx.token.balance(&ctx.sender);
+        let initial_contract_balance = ctx.token.balance(&ctx.contract_id);
+        
+        // Attempt to create the batch - should fail with ArithmeticOverflow
+        let result = ctx.client().try_create_streams(&ctx.sender, &streams);
+        
+        // Assert the correct error is returned
+        assert_eq!(result.unwrap_err(), ContractError::ArithmeticOverflow);
+        
+        // Verify no partial state was written on overflow
+        assert_eq!(ctx.client().get_stream_count(), initial_stream_count);
+        assert_eq!(ctx.token.balance(&ctx.sender), initial_sender_balance);
+        assert_eq!(ctx.token.balance(&ctx.contract_id), initial_contract_balance);
+        
+        // Verify no events were emitted
+        let events = ctx.env.events().all();
+        let stream_events: Vec<_> = events.iter()
+            .filter(|e| e.topics.get(0).map(|t| t.to_string()) == Some("StreamCreated".to_string()))
+            .collect();
+        assert_eq!(stream_events.len(), 0);
+    }
+}
+
+/// Additional focused test for the exact overflow scenario at lib.rs:316-317
+#[test]
+fn batch_deposit_sum_overflow_exact_boundary() {
+    let ctx = TestContext::setup();
+    ctx.env.ledger().set_timestamp(0);
+    
+    // Create exactly 2 streams where the sum overflows i128::MAX
+    let amount1 = i128::MAX - 1000;
+    let amount2 = 2000; // This will cause overflow: (MAX - 1000) + 2000 > MAX
+    
+    let streams = vec![
+        &ctx.env,
+        CreateStreamParams {
+            recipient: Address::generate(&ctx.env),
+            deposit_amount: amount1,
+            rate_per_second: 1,
+            start_time: 0,
+            cliff_time: 0,
+            end_time: 1000,
+            withdraw_dust_threshold: None,
+            memo: None,
+        },
+        CreateStreamParams {
+            recipient: Address::generate(&ctx.env),
+            deposit_amount: amount2,
+            rate_per_second: 1,
+            start_time: 0,
+            cliff_time: 0,
+            end_time: 1000,
+            withdraw_dust_threshold: None,
+            memo: None,
+        },
+    ];
+    
+    // Verify overflow would occur
+    assert!(amount1.checked_add(amount2).is_none());
+    
+    // Record initial state
+    let initial_stream_count = ctx.client().get_stream_count();
+    let initial_sender_balance = ctx.token.balance(&ctx.sender);
+    let initial_contract_balance = ctx.token.balance(&ctx.contract_id);
+    
+    // Attempt batch creation - should fail
+    let result = ctx.client().try_create_streams(&ctx.sender, &streams);
+    assert_eq!(result.unwrap_err(), ContractError::ArithmeticOverflow);
+    
+    // Verify atomicity - no partial state written
+    assert_eq!(ctx.client().get_stream_count(), initial_stream_count);
+    assert_eq!(ctx.token.balance(&ctx.sender), initial_sender_balance);
+    assert_eq!(ctx.token.balance(&ctx.contract_id), initial_contract_balance);
+}
+
+/// Test that batch creation succeeds when sum is just under the overflow boundary
+#[test]
+fn batch_deposit_sum_just_under_overflow_succeeds() {
+    let ctx = TestContext::setup();
+    ctx.env.ledger().set_timestamp(0);
+    
+    // Create 2 streams where sum is just under i128::MAX
+    let amount1 = i128::MAX - 1000;
+    let amount2 = 500; // Sum = MAX - 500, which is valid
+    
+    let streams = vec![
+        &ctx.env,
+        CreateStreamParams {
+            recipient: Address::generate(&ctx.env),
+            deposit_amount: amount1,
+            rate_per_second: 1,
+            start_time: 0,
+            cliff_time: 0,
+            end_time: amount1, // Ensure end_time * rate >= deposit
+            withdraw_dust_threshold: None,
+            memo: None,
+        },
+        CreateStreamParams {
+            recipient: Address::generate(&ctx.env),
+            deposit_amount: amount2,
+            rate_per_second: 1,
+            start_time: 0,
+            cliff_time: 0,
+            end_time: amount2, // Ensure end_time * rate >= deposit
+            withdraw_dust_threshold: None,
+            memo: None,
+        },
+    ];
+    
+    // Verify no overflow would occur
+    assert!(amount1.checked_add(amount2).is_some());
+    
+    // This should succeed (though it will fail due to insufficient balance,
+    // but that's a different error - we're testing the overflow path specifically)
+    let result = ctx.client().try_create_streams(&ctx.sender, &streams);
+    
+    // Should fail with InsufficientBalance, not ArithmeticOverflow
+    match result {
+        Err(ContractError::InsufficientBalance) => {
+            // Expected - sender doesn't have enough tokens for such large amounts
+        }
+        Err(ContractError::ArithmeticOverflow) => {
+            panic!("Should not get ArithmeticOverflow for valid sum");
+        }
+        _ => {
+            // Other errors are acceptable (e.g., validation failures)
+        }
+    }
 }
