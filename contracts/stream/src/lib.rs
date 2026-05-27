@@ -871,10 +871,7 @@ fn save_recipient_page(env: &Env, recipient: &Address, page: u32, ids: &soroban_
 /// Load the number of pages in a recipient's paged index (0 if none).
 fn load_recipient_page_count(env: &Env, recipient: &Address) -> u32 {
     let key = DataKey::RecipientStreamPageCount(recipient.clone());
-    env.storage()
-        .persistent()
-        .get(&key)
-        .unwrap_or(0u32)
+    env.storage().persistent().get(&key).unwrap_or(0u32)
 }
 
 /// Save the number of pages in a recipient's paged index.
@@ -993,10 +990,7 @@ fn remove_stream_from_paged_index(env: &Env, recipient: &Address, stream_id: u64
 // Pending recipient update helpers (Issue #534)
 // ---------------------------------------------------------------------------
 
-fn load_pending_recipient_update(
-    env: &Env,
-    stream_id: u64,
-) -> Option<PendingRecipientUpdate> {
+fn load_pending_recipient_update(env: &Env, stream_id: u64) -> Option<PendingRecipientUpdate> {
     let key = DataKey::PendingRecipientUpdate(stream_id);
     let update: Option<PendingRecipientUpdate> = env.storage().persistent().get(&key);
     if update.is_some() {
@@ -4138,12 +4132,12 @@ impl FluxoraStream {
             let mut current_page_idx = (cursor / MAX_RECIPIENT_PAGE_SIZE as u64) as u32;
             let mut offset_in_page = (cursor % MAX_RECIPIENT_PAGE_SIZE as u64) as u32;
 
-            while current_page_idx < page_count && (result.len() as u32) < page_size {
+            while current_page_idx < page_count && result.len() < page_size {
                 let page = load_recipient_page(&env, &recipient, current_page_idx);
 
                 for i in offset_in_page..page.len() {
                     result.push_back(page.get(i).unwrap());
-                    if (result.len() as u32) >= page_size {
+                    if result.len() >= page_size {
                         break;
                     }
                 }

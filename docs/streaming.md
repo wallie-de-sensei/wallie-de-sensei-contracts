@@ -324,6 +324,7 @@ withdrawable = accrued - withdrawn_amount
 From **CONTRACT_VERSION 5**, senders can optionally set a `withdraw_dust_threshold` per stream to reduce fee and event spam from tiny micro-withdrawals.
 
 - **Enforcement**: If `withdrawable < withdraw_dust_threshold`, the withdrawal returns `0` (no transfer, no event).
+- **Validation**: At creation time, `withdraw_dust_threshold` must not exceed `deposit_amount`. If it does, the creation is rejected with `ContractError::InvalidDustThreshold` (20).
 - **Exceptions (Threshold Ignored)**:
     - **Terminal State**: Once the stream reaches `end_time` or is `Cancelled`, the threshold is ignored to ensure the recipient can pull all remaining funds.
     - **Final Drain**: If the withdrawal would result in `withdrawn_amount == deposit_amount` (completing the stream), it is allowed even if the amount is below the threshold.
@@ -542,13 +543,17 @@ contract.create_streams_relative(&sender, &params)?;
 | `get_stream_state`        | Anyone                        | None (view)                                 |
 | `get_streams_by_id_range` | Anyone                        | None (view, paginated)                      |
 | `get_recipient_streams_paginated` | Anyone                  | None (view, paginated)                      |
+| `get_pending_recipient_update` | Anyone                     | None (view)                                 |
 | `pause_stream_as_admin`   | Admin                         | `admin.require_auth()`                      |
 | `resume_stream_as_admin`  | Admin                         | `admin.require_auth()`                      |
 | `cancel_stream_as_admin`  | Admin                         | `admin.require_auth()`                      |
+| `migrate_recipient_index` | Admin                         | `admin.require_auth()`                      |
 | `close_completed_stream`  | Anyone                        | None (permissionless terminal cleanup)     |
 | `top_up_stream`           | Funder address                | `funder.require_auth()`                     |
 | `update_rate_per_second`  | Sender                        | `sender.require_auth()`                     |
-| `update_recipient`        | Recipient                     | `recipient.require_auth()`                  |
+| `update_recipient`        | Sender                        | `sender.require_auth()` (propose)           |
+| `accept_recipient_update` | Current Recipient             | `recipient.require_auth()` (accept)        |
+| `cancel_recipient_update` | Sender                        | `sender.require_auth()` (withdraw proposal) |
 | `decrease_rate_per_second`| Sender                        | `sender.require_auth()`                     |
 | `shorten_stream_end_time` | Sender                        | `sender.require_auth()`                     |
 | `extend_stream_end_time`  | Sender                        | `sender.require_auth()`                     |
@@ -627,6 +632,10 @@ loop {
 | `get_recipient_streams_paginated` | Large portfolios | 100/page | Bounded, safe |
 | `get_streams_by_id_range` | Full contract export | 100/page | Bounded, safe |
 
+#### Recipient Index Migration (#519)
+
+Administrators can migrate a recipient's legacy flat stream list to a segmented paged index via `migrate_recipient_index(recipient)`. This bounds per-operation I/O at $O(1)$ and is recommended for high-volume recipients to prevent memory exhaustion during mutations.
+
 ### top_up_stream: Observable Semantics
 
 `top_up_stream(stream_id, funder, amount)` is a deposit-only mutation for existing streams.
@@ -685,6 +694,24 @@ A naive decrease would retroactively lower the recipient's accrued tokens. To pr
 - Accrued amounts never decrease due to rate updates.
 - Recipient entitlement is preserved or increased.
 - Deposit coverage ensures the stream remains fully fundable at the new rate.
+
+### Recipient Rotation (Propose-and-Accept)
+
+From **CONTRACT_VERSION 6**, the stream recipient is rotated via a two-step propose-and-accept pattern. This provides a "veto" window for the current recipient to detect unauthorized changes and take protective action.
+
+- **Propose**: The sender calls `update_recipient(stream_id, new_recipient)`. This stores a pending proposal and emits `RecipientUpdateProposed`.
+- **Accept**: The **current recipient** must call `accept_recipient_update(stream_id)` to finalize the rotation. This emits `RecipientUpdated`.
+- **Cancel**: The sender can withdraw the proposal at any time via `cancel_recipient_update(stream_id)`. This emits `RecipientUpdateCancelled`.
+
+#### Rules:
+- Only the sender can propose an update.
+- Only the current recipient can accept an update.
+- If a proposal is already pending, `update_recipient` fails with `PendingRecipientUpdateExists`.
+- Attempting to accept or cancel when no proposal exists returns `NoPendingRecipientUpdate`.
+
+#### `get_pending_recipient_update(stream_id) -> Option<PendingRecipientUpdate>`
+
+View function to check if a recipient rotation is currently proposed for a stream. Returns the proposed recipient address and timestamp if pending.
 
 ### transfer_sender: Observable Semantics
 
@@ -977,8 +1004,9 @@ errors relevant to stream creation and timing.
 | `ContractError::StreamAlreadyPaused` (10)                               | `pause_stream`                     | Double pause                                  |
 | `ContractError::StreamNotPaused` (11)                                   | `resume_stream`                    | Resume active stream                          |
 | `ContractError::StreamTerminalState` (12)                               | `pause_stream` / `resume_stream`   | Modification past end_time                    |
-| `ContractError::StreamNotFound` (1)                                     | Various                            | Invalid stream_id                             |
-| `ContractError::Unauthorized` (6)                                       | Various                            | Auth check failed                             |
+| `ContractError::StreamNotFound` (1) | Various | Invalid stream_id |
+| `ContractError::InvalidDustThreshold` (20) | `create_stream` | `dust_threshold > deposit_amount` |
+| `ContractError::Unauthorized` (6) | Various | Auth check failed |
 | `ContractError::InvalidState` (2)                                       | `withdraw`                         | Withdraw from non-terminal paused             |
 | `ContractError::InvalidState` (2)                                       | `cancel_stream`                    | Cancel completed/cancelled                    |
 | `"invalid state for stream closure"`                                    | `close_completed_stream`           | Close non-terminal (Active/Paused) stream    |
