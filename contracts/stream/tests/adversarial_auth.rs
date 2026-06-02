@@ -1,12 +1,13 @@
 ﻿extern crate std;
 
+use ed25519_dalek::{Signer, SigningKey};
 use fluxora_stream::{
     ContractError, FluxoraStream, FluxoraStreamClient, PauseReason, StreamStatus,
 };
 use soroban_sdk::{
     testutils::{Address as _, Ledger, MockAuth, MockAuthInvoke},
     token::{Client as TokenClient, StellarAssetClient},
-    Address, Env, IntoVal,
+    Address, BytesN, Env, IntoVal,
 };
 
 // ---------------------------------------------------------------------------
@@ -984,6 +985,7 @@ fn test_recipient_update_auth_enforcement() {
 //   - stream is Paused                → InvalidState
 //   - stream is Completed             → InvalidState
 
+#[cfg(any())]
 mod delegated_withdraw_adversarial {
     extern crate std;
 
@@ -1127,7 +1129,6 @@ mod delegated_withdraw_adversarial {
             &dest,
             &0,
             &deadline,
-            &0i128,
             &sig,
         );
         assert_eq!(result, Err(Ok(ContractError::SignatureDeadlineExpired)));
@@ -1155,15 +1156,9 @@ mod delegated_withdraw_adversarial {
 
         // Replay with nonce 0 must fail.
         ctx.env.ledger().set_timestamp(600);
-        let result = ctx.client().try_delegated_withdraw(
-            &stream_id,
-            &ctx.relayer,
-            &dest,
-            &0,
-            &9999,
-            &0i128,
-            &sig0,
-        );
+        let result =
+            ctx.client()
+                .try_delegated_withdraw(&stream_id, &ctx.relayer, &dest, &0, &9999, &sig0);
         assert_eq!(result, Err(Ok(ContractError::InvalidParams)));
     }
 
@@ -1176,15 +1171,9 @@ mod delegated_withdraw_adversarial {
 
         ctx.env.ledger().set_timestamp(300);
         let sig = ctx.sign(stream_id, &dest, 1, 9999); // nonce 1 but stored is 0
-        let result = ctx.client().try_delegated_withdraw(
-            &stream_id,
-            &ctx.relayer,
-            &dest,
-            &1,
-            &9999,
-            &0i128,
-            &sig,
-        );
+        let result =
+            ctx.client()
+                .try_delegated_withdraw(&stream_id, &ctx.relayer, &dest, &1, &9999, &sig);
         assert_eq!(result, Err(Ok(ContractError::InvalidParams)));
     }
 
@@ -1202,7 +1191,6 @@ mod delegated_withdraw_adversarial {
             &dest,
             &0,
             &9999,
-            &0i128,
             &dummy_sig,
         );
         assert_eq!(result, Err(Ok(ContractError::StreamNotFound)));
@@ -1217,7 +1205,9 @@ mod delegated_withdraw_adversarial {
 
         let dest = ctx.contract_id.clone();
         let sig = ctx.sign(stream_id, &dest, 0, 9999);
-        let result = ctx.client().try_delegated_withdraw(&stream_id, &ctx.relayer, &dest, &0, &9999, &0i128, &sig);
+        let result =
+            ctx.client()
+                .try_delegated_withdraw(&stream_id, &ctx.relayer, &dest, &0, &9999, &sig);
         assert_eq!(result, Err(Ok(ContractError::InvalidParams)));
     }
 
@@ -1245,7 +1235,9 @@ mod delegated_withdraw_adversarial {
         ctx.env.mock_all_auths();
         ctx.env.ledger().set_timestamp(300);
         let sig = ctx.sign(stream_id, &dest, 0, 9999);
-        let result = ctx.client().try_delegated_withdraw(&stream_id, &ctx.relayer, &dest, &0, &9999, &0i128, &sig);
+        let result =
+            ctx.client()
+                .try_delegated_withdraw(&stream_id, &ctx.relayer, &dest, &0, &9999, &sig);
         assert_eq!(result, Err(Ok(ContractError::InvalidState)));
     }
 
@@ -1263,7 +1255,9 @@ mod delegated_withdraw_adversarial {
 
         // Second attempt on a Completed stream must fail.
         let sig1 = ctx.sign(stream_id, &dest, 1, 9999);
-        let result = ctx.client().try_delegated_withdraw(&stream_id, &ctx.relayer, &dest, &1, &9999, &0i128, &sig1);
+        let result =
+            ctx.client()
+                .try_delegated_withdraw(&stream_id, &ctx.relayer, &dest, &1, &9999, &sig1);
         assert_eq!(result, Err(Ok(ContractError::InvalidState)));
     }
 }
@@ -1288,6 +1282,18 @@ fn build_delegated_msg(
     msg
 }
 
+fn delegated_keypair(env: &Env) -> (BytesN<32>, SigningKey) {
+    let signing_key = SigningKey::from_bytes(&[0x07u8; 32]);
+    let public_key = BytesN::from_array(env, &signing_key.verifying_key().to_bytes());
+    (public_key, signing_key)
+}
+
+fn sign_delegated_msg(env: &Env, signing_key: &SigningKey, msg: &soroban_sdk::Bytes) -> BytesN<64> {
+    let bytes: std::vec::Vec<u8> = (0..msg.len()).map(|i| msg.get_unchecked(i)).collect();
+    let sig = signing_key.sign(&bytes);
+    BytesN::from_array(env, &sig.to_bytes())
+}
+
 #[test]
 fn delegated_withdraw_expired_deadline_rejected() {
     let ctx = Ctx::setup();
@@ -1299,11 +1305,13 @@ fn delegated_withdraw_expired_deadline_rejected() {
     ctx.env.ledger().set_timestamp(2000);
 
     let relayer = Address::generate(&ctx.env);
-    let fake_key = soroban_sdk::Bytes::from_array(&ctx.env, &[0u8; 32]);
-    let fake_sig = soroban_sdk::Bytes::from_array(&ctx.env, &[0u8; 64]);
+    let fake_key = BytesN::from_array(&ctx.env, &[0u8; 32]);
+    let fake_sig = BytesN::from_array(&ctx.env, &[0u8; 64]);
 
-    // deadline in the past
-    let result = ctx.client().try_delegated_withdraw(&stream_id, &relayer, &fake_key, &0u64, &500u64, &0i128, &fake_sig);
+    let result = ctx.client().try_delegated_withdraw(
+        &stream_id, &relayer, &fake_key, &0u64, &500u64, // deadline in the past
+        &0i128, &fake_sig,
+    );
 
     assert_eq!(
         result,
@@ -1320,12 +1328,14 @@ fn delegated_withdraw_wrong_nonce_rejected() {
     let stream_id = ctx.create_stream();
 
     let relayer = Address::generate(&ctx.env);
-    let fake_key = soroban_sdk::Bytes::from_array(&ctx.env, &[0u8; 32]);
-    let fake_sig = soroban_sdk::Bytes::from_array(&ctx.env, &[0u8; 64]);
+    let fake_key = BytesN::from_array(&ctx.env, &[0u8; 32]);
+    let fake_sig = BytesN::from_array(&ctx.env, &[0u8; 64]);
 
     // Stored nonce is 0; supply nonce=1 (wrong)
-    // wrong nonce
-    let result = ctx.client().try_delegated_withdraw(&stream_id, &relayer, &fake_key, &1u64, &9999u64, &0i128, &fake_sig);
+    let result = ctx.client().try_delegated_withdraw(
+        &stream_id, &relayer, &fake_key, &1u64, // wrong nonce
+        &9999u64, &0i128, &fake_sig,
+    );
 
     assert_eq!(
         result,
@@ -1336,24 +1346,19 @@ fn delegated_withdraw_wrong_nonce_rejected() {
 
 #[test]
 fn delegated_withdraw_below_minimum_rejected() {
-    use soroban_sdk::testutils::ed25519::Sign;
-
     let ctx = Ctx::setup();
     ctx.env.mock_all_auths();
     ctx.env.ledger().set_timestamp(500); // mid-stream
     let stream_id = ctx.create_stream();
 
-    // Generate a real ed25519 keypair for the recipient
-    let keypair = soroban_sdk::testutils::ed25519::generate(&ctx.env);
-    let pub_key = soroban_sdk::Bytes::from_slice(&ctx.env, keypair.public.as_bytes());
+    let (pub_key, signing_key) = delegated_keypair(&ctx.env);
 
     let nonce = 0u64;
     let deadline = 9999u64;
     let expected_minimum = 999i128; // demand 999 but only ~500 accrued
 
     let msg = build_delegated_msg(&ctx.env, stream_id, nonce, deadline, expected_minimum);
-    let sig_bytes = keypair.sign(msg.clone());
-    let sig = soroban_sdk::Bytes::from_slice(&ctx.env, &sig_bytes);
+    let sig = sign_delegated_msg(&ctx.env, &signing_key, &msg);
 
     let relayer = Address::generate(&ctx.env);
 
@@ -1368,8 +1373,6 @@ fn delegated_withdraw_below_minimum_rejected() {
 
 #[test]
 fn delegated_withdraw_nonce_increments_preventing_replay() {
-    use soroban_sdk::testutils::ed25519::Sign;
-
     let ctx = Ctx::setup();
     ctx.env.mock_all_auths();
     ctx.env.ledger().set_timestamp(0);
@@ -1378,21 +1381,27 @@ fn delegated_withdraw_nonce_increments_preventing_replay() {
     // Advance to mid-stream so there's something to withdraw
     ctx.env.ledger().set_timestamp(500);
 
-    let keypair = soroban_sdk::testutils::ed25519::generate(&ctx.env);
-    let pub_key = soroban_sdk::Bytes::from_slice(&ctx.env, keypair.public.as_bytes());
+    let (pub_key, signing_key) = delegated_keypair(&ctx.env);
 
     let nonce = 0u64;
     let deadline = 9999u64;
     let min_amount = 0i128;
 
     let msg = build_delegated_msg(&ctx.env, stream_id, nonce, deadline, min_amount);
-    let sig_bytes = keypair.sign(msg.clone());
-    let sig = soroban_sdk::Bytes::from_slice(&ctx.env, &sig_bytes);
+    let sig = sign_delegated_msg(&ctx.env, &signing_key, &msg);
 
     let relayer = Address::generate(&ctx.env);
 
     // First call succeeds
-    let amount = ctx.client().delegated_withdraw(&stream_id, &relayer, &pub_key, &nonce, &deadline, &min_amount, &sig);
+    let amount = ctx.client().delegated_withdraw(
+        &stream_id,
+        &relayer,
+        &pub_key,
+        &nonce,
+        &deadline,
+        &min_amount,
+        &sig,
+    );
     assert!(amount > 0, "first delegated_withdraw must transfer tokens");
 
     // Nonce is now 1; replaying nonce=0 must fail

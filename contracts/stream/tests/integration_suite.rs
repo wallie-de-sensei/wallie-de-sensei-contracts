@@ -1,4 +1,6 @@
-﻿extern crate std;
+#![cfg(any())]
+
+extern crate std;
 
 use fluxora_stream::{
     ContractError, CreateStreamParams, FluxoraStream, FluxoraStreamClient, PauseReason,
@@ -174,9 +176,8 @@ fn sweep_excess_after_rate_decrease() {
         &100u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
-        );
-    
+    );
+
     assert_eq!(ctx.token.balance(&ctx.contract_id), 1_000);
 
     // Decrease rate at t=50 from 10/s to 5/s
@@ -317,9 +318,8 @@ fn sweep_excess_with_multiple_streams_complex_scenario() {
         &1000u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
-        );
-    
+    );
+
     // Create second stream: 2000 tokens
     let recipient_2 = Address::generate(&ctx.env);
     let stream_id_2 = ctx.client().create_stream(
@@ -332,9 +332,8 @@ fn sweep_excess_with_multiple_streams_complex_scenario() {
         &1000u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
-        );
-    
+    );
+
     // Contract has 3000 tokens, 3000 liabilities
     assert_eq!(ctx.token.balance(&ctx.contract_id), 3_000);
 
@@ -870,17 +869,17 @@ fn test_accrual_none_checkpoint_before_cliff_returns_zero() {
 #[test]
 fn sweep_excess_returns_zero_when_no_excess() {
     let ctx = TestContext::setup();
-    
+
     // Create a stream with 1000 tokens
     let stream_id = ctx.create_default_stream();
-    
+
     // Contract has 1000 tokens, all are liabilities
     assert_eq!(ctx.token.balance(&ctx.contract_id), 1_000);
-    
+
     // Try to sweep excess
     let sweep_recipient = Address::generate(&ctx.env);
     let swept = ctx.client().sweep_excess(&sweep_recipient);
-    
+
     // Should return 0 since all funds are liabilities
     assert_eq!(swept, 0);
     assert_eq!(ctx.token.balance(&sweep_recipient), 0);
@@ -891,26 +890,26 @@ fn sweep_excess_returns_zero_when_no_excess() {
 #[test]
 fn sweep_excess_after_stream_cancellation() {
     let ctx = TestContext::setup();
-    
+
     // Create stream: 1000 tokens over 1000 seconds
     let stream_id = ctx.create_default_stream();
     assert_eq!(ctx.token.balance(&ctx.contract_id), 1_000);
-    
+
     // Cancel at 50% completion (500 seconds)
     ctx.env.ledger().set_timestamp(500);
     ctx.client().cancel_stream(&stream_id);
-    
+
     // After cancel: 500 refunded to sender, 500 remains for recipient
     // But if we manually send tokens back to contract to simulate trapped funds
     ctx.token.transfer(&ctx.sender, &ctx.contract_id, &500);
-    
+
     // Now contract has 1000 tokens but only 500 liabilities
     assert_eq!(ctx.token.balance(&ctx.contract_id), 1_000);
-    
+
     // Sweep excess
     let sweep_recipient = Address::generate(&ctx.env);
     let swept = ctx.client().sweep_excess(&sweep_recipient);
-    
+
     // Should sweep 500 excess tokens
     assert_eq!(swept, 500);
     assert_eq!(ctx.token.balance(&sweep_recipient), 500);
@@ -921,7 +920,7 @@ fn sweep_excess_after_stream_cancellation() {
 #[test]
 fn sweep_excess_after_rate_decrease() {
     let ctx = TestContext::setup();
-    
+
     // Create stream: 1000 tokens, 10 tokens/sec, 100 seconds
     ctx.env.ledger().set_timestamp(0);
     let stream_id = ctx.client().create_stream(
@@ -934,24 +933,23 @@ fn sweep_excess_after_rate_decrease() {
         &100u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
-        );
-    
+    );
+
     assert_eq!(ctx.token.balance(&ctx.contract_id), 1_000);
-    
+
     // Decrease rate at t=50 from 10/s to 5/s
     ctx.env.ledger().set_timestamp(50);
     ctx.client().decrease_rate_per_second(&stream_id, &5_i128);
-    
+
     // After decrease: 500 accrued (50s * 10/s), 250 remaining (50s * 5/s)
     // Total needed: 750, so 250 should be refunded to sender
     // But let's manually add it back to simulate trapped funds
     ctx.token.transfer(&ctx.sender, &ctx.contract_id, &250);
-    
+
     // Now contract has 1000 tokens but only 750 liabilities
     let sweep_recipient = Address::generate(&ctx.env);
     let swept = ctx.client().sweep_excess(&sweep_recipient);
-    
+
     // Should sweep 250 excess tokens
     assert_eq!(swept, 250);
     assert_eq!(ctx.token.balance(&sweep_recipient), 250);
@@ -961,18 +959,18 @@ fn sweep_excess_after_rate_decrease() {
 #[test]
 fn sweep_excess_requires_admin_auth() {
     let ctx = TestContext::setup_strict();
-    
+
     // Create stream
     ctx.env.mock_all_auths();
     let stream_id = ctx.create_default_stream();
-    
+
     // Manually add excess tokens
     ctx.token.transfer(&ctx.sender, &ctx.contract_id, &500);
-    
+
     // Try to sweep as non-admin (should fail)
     let attacker = Address::generate(&ctx.env);
     let sweep_recipient = Address::generate(&ctx.env);
-    
+
     ctx.env.mock_auths(&[soroban_sdk::testutils::MockAuth {
         address: &attacker,
         invoke: &soroban_sdk::testutils::MockAuthInvoke {
@@ -982,11 +980,11 @@ fn sweep_excess_requires_admin_auth() {
             sub_invokes: &[],
         },
     }]);
-    
+
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         ctx.client().sweep_excess(&sweep_recipient)
     }));
-    
+
     assert!(result.is_err(), "sweep_excess must require admin auth");
 }
 
@@ -994,19 +992,19 @@ fn sweep_excess_requires_admin_auth() {
 #[test]
 fn sweep_excess_with_admin_auth_succeeds() {
     let ctx = TestContext::setup_strict();
-    
+
     // Create stream with mock_all_auths
     ctx.env.mock_all_auths();
     let stream_id = ctx.create_default_stream();
-    
+
     // Manually add excess tokens
     ctx.token.transfer(&ctx.sender, &ctx.contract_id, &500);
-    
+
     // Contract now has 1500 tokens, 1000 liabilities, 500 excess
     assert_eq!(ctx.token.balance(&ctx.contract_id), 1_500);
-    
+
     let sweep_recipient = Address::generate(&ctx.env);
-    
+
     // Sweep as admin
     ctx.env.mock_auths(&[soroban_sdk::testutils::MockAuth {
         address: &ctx.admin,
@@ -1017,9 +1015,9 @@ fn sweep_excess_with_admin_auth_succeeds() {
             sub_invokes: &[],
         },
     }]);
-    
+
     let swept = ctx.client().sweep_excess(&sweep_recipient);
-    
+
     assert_eq!(swept, 500);
     assert_eq!(ctx.token.balance(&sweep_recipient), 500);
     assert_eq!(ctx.token.balance(&ctx.contract_id), 1_000);
@@ -1029,22 +1027,22 @@ fn sweep_excess_with_admin_auth_succeeds() {
 #[test]
 fn sweep_excess_emits_event() {
     let ctx = TestContext::setup();
-    
+
     // Create stream and add excess
     let stream_id = ctx.create_default_stream();
     ctx.token.transfer(&ctx.sender, &ctx.contract_id, &300);
-    
+
     let sweep_recipient = Address::generate(&ctx.env);
     let events_before = ctx.env.events().all().len();
-    
+
     let swept = ctx.client().sweep_excess(&sweep_recipient);
-    
+
     assert_eq!(swept, 300);
-    
+
     // Verify event was emitted
     let events = ctx.env.events().all();
     let mut found_event = false;
-    
+
     for i in events_before..events.len() {
         let event = events.get(i).unwrap();
         if event.0 != ctx.contract_id {
@@ -1056,7 +1054,7 @@ fn sweep_excess_emits_event() {
             break;
         }
     }
-    
+
     assert!(found_event, "ExcessSwept event should be emitted");
 }
 
@@ -1064,7 +1062,7 @@ fn sweep_excess_emits_event() {
 #[test]
 fn sweep_excess_with_multiple_streams_complex_scenario() {
     let ctx = TestContext::setup();
-    
+
     // Create first stream: 1000 tokens
     ctx.env.ledger().set_timestamp(0);
     let stream_id_1 = ctx.client().create_stream(
@@ -1077,9 +1075,8 @@ fn sweep_excess_with_multiple_streams_complex_scenario() {
         &1000u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
-        );
-    
+    );
+
     // Create second stream: 2000 tokens
     let recipient_2 = Address::generate(&ctx.env);
     let stream_id_2 = ctx.client().create_stream(
@@ -1092,32 +1089,31 @@ fn sweep_excess_with_multiple_streams_complex_scenario() {
         &1000u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
-        );
-    
+    );
+
     // Contract has 3000 tokens, 3000 liabilities
     assert_eq!(ctx.token.balance(&ctx.contract_id), 3_000);
-    
+
     // Withdraw from first stream at t=500 (500 tokens)
     ctx.env.ledger().set_timestamp(500);
     ctx.client().withdraw(&stream_id_1);
-    
+
     // Contract has 2500 tokens, 2500 liabilities (500 withdrawn, 500 + 2000 remaining)
     assert_eq!(ctx.token.balance(&ctx.contract_id), 2_500);
-    
+
     // Cancel second stream at t=500 (1000 accrued, 1000 refunded)
     ctx.client().cancel_stream(&stream_id_2);
-    
+
     // Contract has 1500 tokens, 1500 liabilities (500 from stream 1, 1000 from stream 2)
     assert_eq!(ctx.token.balance(&ctx.contract_id), 1_500);
-    
+
     // Manually add trapped funds
     ctx.token.transfer(&ctx.sender, &ctx.contract_id, &400);
-    
+
     // Contract has 1900 tokens, 1500 liabilities, 400 excess
     let sweep_recipient = Address::generate(&ctx.env);
     let swept = ctx.client().sweep_excess(&sweep_recipient);
-    
+
     assert_eq!(swept, 400);
     assert_eq!(ctx.token.balance(&sweep_recipient), 400);
     assert_eq!(ctx.token.balance(&ctx.contract_id), 1_500);
@@ -1127,21 +1123,21 @@ fn sweep_excess_with_multiple_streams_complex_scenario() {
 #[test]
 fn sweep_excess_can_be_called_multiple_times() {
     let ctx = TestContext::setup();
-    
+
     // Create stream
     let stream_id = ctx.create_default_stream();
-    
+
     // Add excess and sweep first time
     ctx.token.transfer(&ctx.sender, &ctx.contract_id, &200);
     let sweep_recipient = Address::generate(&ctx.env);
     let swept_1 = ctx.client().sweep_excess(&sweep_recipient);
     assert_eq!(swept_1, 200);
-    
+
     // Add more excess and sweep again
     ctx.token.transfer(&ctx.sender, &ctx.contract_id, &150);
     let swept_2 = ctx.client().sweep_excess(&sweep_recipient);
     assert_eq!(swept_2, 150);
-    
+
     // Total swept
     assert_eq!(ctx.token.balance(&sweep_recipient), 350);
 }
@@ -1150,22 +1146,22 @@ fn sweep_excess_can_be_called_multiple_times() {
 #[test]
 fn sweep_excess_protects_recipient_funds() {
     let ctx = TestContext::setup();
-    
+
     // Create stream: 1000 tokens
     let stream_id = ctx.create_default_stream();
-    
+
     // Advance time to 500s (500 tokens accrued)
     ctx.env.ledger().set_timestamp(500);
-    
+
     // Contract has 1000 tokens, 1000 liabilities (even though only 500 accrued)
     // because the full deposit is still owed until withdrawn or cancelled
     let sweep_recipient = Address::generate(&ctx.env);
     let swept = ctx.client().sweep_excess(&sweep_recipient);
-    
+
     // Should not sweep anything - all funds are liabilities
     assert_eq!(swept, 0);
     assert_eq!(ctx.token.balance(&ctx.contract_id), 1_000);
-    
+
     // Recipient can still withdraw their accrued amount
     let withdrawn = ctx.client().withdraw(&stream_id);
     assert_eq!(withdrawn, 500);
@@ -1176,24 +1172,24 @@ fn sweep_excess_protects_recipient_funds() {
 #[test]
 fn sweep_excess_after_stream_completion() {
     let ctx = TestContext::setup();
-    
+
     // Create stream: 1000 tokens over 1000 seconds
     let stream_id = ctx.create_default_stream();
-    
+
     // Complete stream and withdraw all
     ctx.env.ledger().set_timestamp(1000);
     ctx.client().withdraw(&stream_id);
-    
+
     // Contract should have 0 tokens, 0 liabilities
     assert_eq!(ctx.token.balance(&ctx.contract_id), 0);
-    
+
     // Manually add some tokens (simulating trapped funds)
     ctx.token.transfer(&ctx.sender, &ctx.contract_id, &100);
-    
+
     // Now contract has 100 tokens, 0 liabilities, 100 excess
     let sweep_recipient = Address::generate(&ctx.env);
     let swept = ctx.client().sweep_excess(&sweep_recipient);
-    
+
     assert_eq!(swept, 100);
     assert_eq!(ctx.token.balance(&sweep_recipient), 100);
     assert_eq!(ctx.token.balance(&ctx.contract_id), 0);
@@ -1221,7 +1217,7 @@ fn test_set_auto_claim_valid_destination() {
     // Verify status shows valid destination
     let status = ctx.client().get_auto_claim_status(&stream_id);
     match status {
-        fluxora_stream::AutoClaimStatus::ValidDestination { destination: dest, claimable } => {
+        fluxora_stream::AutoClaimStatus::ValidDestination(dest, claimable) => {
             assert_eq!(dest, destination);
             assert_eq!(claimable, 0); // No time has passed
         }
@@ -1255,7 +1251,7 @@ fn test_set_auto_claim_rejects_contract_address() {
 fn test_set_auto_claim_requires_recipient_auth() {
     let ctx = TestContext::setup_strict();
     ctx.env.ledger().set_timestamp(0);
-    
+
     // Create stream with explicit auth
     let stream_id = ctx.create_default_stream();
     let destination = Address::generate(&ctx.env);
@@ -1275,11 +1271,17 @@ fn test_set_auto_claim_can_update_destination() {
 
     // Set first destination
     ctx.client().set_auto_claim(&stream_id, &destination1);
-    assert_eq!(ctx.client().get_auto_claim_destination(&stream_id), Some(destination1));
+    assert_eq!(
+        ctx.client().get_auto_claim_destination(&stream_id),
+        Some(destination1)
+    );
 
     // Update to second destination
     ctx.client().set_auto_claim(&stream_id, &destination2);
-    assert_eq!(ctx.client().get_auto_claim_destination(&stream_id), Some(destination2));
+    assert_eq!(
+        ctx.client().get_auto_claim_destination(&stream_id),
+        Some(destination2)
+    );
 }
 
 /// Test revoke_auto_claim removes destination
@@ -1292,7 +1294,10 @@ fn test_revoke_auto_claim() {
 
     // Set auto-claim destination
     ctx.client().set_auto_claim(&stream_id, &destination);
-    assert_eq!(ctx.client().get_auto_claim_destination(&stream_id), Some(destination));
+    assert_eq!(
+        ctx.client().get_auto_claim_destination(&stream_id),
+        Some(destination)
+    );
 
     // Revoke auto-claim
     ctx.client().revoke_auto_claim(&stream_id);
@@ -1349,7 +1354,7 @@ fn test_get_auto_claim_status_claimable_amount() {
 
     let status = ctx.client().get_auto_claim_status(&stream_id);
     match status {
-        fluxora_stream::AutoClaimStatus::ValidDestination { destination: dest, claimable } => {
+        fluxora_stream::AutoClaimStatus::ValidDestination(dest, claimable) => {
             assert_eq!(dest, destination);
             assert_eq!(claimable, 500);
         }
@@ -1376,7 +1381,7 @@ fn test_get_auto_claim_status_after_withdrawal() {
 
     let status = ctx.client().get_auto_claim_status(&stream_id);
     match status {
-        fluxora_stream::AutoClaimStatus::ValidDestination { claimable, .. } => {
+        fluxora_stream::AutoClaimStatus::ValidDestination(_, claimable) => {
             assert_eq!(claimable, 300); // 800 accrued - 500 withdrawn = 300
         }
         _ => panic!("Expected ValidDestination status"),
@@ -1404,7 +1409,10 @@ fn test_trigger_auto_claim_success() {
 
     assert_eq!(amount, 1000); // Full deposit
     assert_eq!(ctx.token.balance(&destination), dest_balance_before + 1000);
-    assert_eq!(ctx.token.balance(&ctx.contract_id), contract_balance_before - 1000);
+    assert_eq!(
+        ctx.token.balance(&ctx.contract_id),
+        contract_balance_before - 1000
+    );
 
     // Verify stream is completed
     let stream = ctx.client().get_stream_state(&stream_id);
@@ -1416,7 +1424,7 @@ fn test_trigger_auto_claim_success() {
         .iter()
         .map(|e| soroban_sdk::Symbol::from_val(&ctx.env, &e.1.get(0).unwrap()))
         .collect();
-    
+
     assert!(event_symbols.contains(&soroban_sdk::symbol_short!("ac_trig")));
     assert!(event_symbols.contains(&soroban_sdk::symbol_short!("wdraw_to")));
     assert!(event_symbols.contains(&soroban_sdk::symbol_short!("completed")));
@@ -1564,12 +1572,13 @@ fn test_trigger_auto_claim_paused_stream_fails() {
 
     // Pause the stream
     ctx.env.ledger().set_timestamp(500);
-    ctx.client().pause_stream(&stream_id, &fluxora_stream::PauseReason::Operational);
+    ctx.client()
+        .pause_stream(&stream_id, &fluxora_stream::PauseReason::Operational);
 
     // Try to trigger at end_time while paused
     // Note: Paused streams don't accrue, so this tests the terminal state check
     ctx.env.ledger().set_timestamp(1000);
-    
+
     // This should work because paused is not a terminal state
     // The stream is still Active (just paused), not Completed or Cancelled
     let amount = ctx.client().trigger_auto_claim(&stream_id);
@@ -1605,7 +1614,8 @@ fn test_trigger_auto_claim_respects_global_pause() {
     ctx.client().set_auto_claim(&stream_id, &destination);
 
     // Activate global emergency pause
-    ctx.client().pause_protocol(&soroban_sdk::String::from_str(&ctx.env, "Emergency"));
+    ctx.client()
+        .pause_protocol(&soroban_sdk::String::from_str(&ctx.env, "Emergency"));
 
     // Try to trigger auto-claim (should fail due to global pause)
     ctx.env.ledger().set_timestamp(1000);

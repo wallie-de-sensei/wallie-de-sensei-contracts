@@ -1,4 +1,24 @@
-use crate::StreamKind;
+use crate::ContractError;
+
+/// Assert that ledger-backed accrual time has not moved backwards.
+///
+/// # Security
+/// Stellar production ledgers are expected to provide monotonically
+/// non-decreasing timestamps. This guard catches test harnesses, migrations, or
+/// future environments that violate that assumption before withdrawable math can
+/// be evaluated at a retrograde timestamp.
+pub fn assert_ledger_time_monotonic(prev_ts: u64, current_ts: u64) -> Result<(), ContractError> {
+    #[cfg(any(test, debug_assertions))]
+    {
+        if current_ts < prev_ts {
+            return Err(ContractError::ClockRegression);
+        }
+    }
+
+    debug_assert!(current_ts >= prev_ts, "retrograde ledger timestamp");
+
+    Ok(())
+}
 
 /// Computes accrued stream amount without relying on Soroban environment state.
 ///
@@ -138,7 +158,12 @@ pub struct CheckpointState {
 /// accrual calculations after rate changes.
 ///
 /// # Parameters
-/// - `state`               – snapshot of the stream's checkpoint state.
+/// - `_start_time`         – original stream start; reserved for future cliff logic.
+/// - `checkpointed_amount` – tokens accrued under all **previous** rate epochs, locked in
+///   at `checkpointed_at`. Initialised to `0` at stream creation.
+/// - `checkpointed_at`     – timestamp of the last checkpoint (== `start_time` initially).
+/// - `cliff_time`          – no accrual is ever visible before this timestamp.
+/// - `end_time`            – accrual is capped at this timestamp.
 /// - `rate_per_second`     – rate for the **current** epoch (`checkpointed_at` ➜ `end_time`).
 /// - `now`                 – evaluation point (caller-supplied; constant within a transaction).
 ///
@@ -156,16 +181,7 @@ pub fn calculate_accrued_amount_checkpointed(
     rate_per_second: i128,
     now: u64,
 ) -> i128 {
-    let CheckpointState {
-        checkpointed_amount,
-        checkpointed_at,
-        cliff_time,
-        end_time,
-        deposit_amount,
-        kind,
-    } = state;
-
-    if now < cliff_time {
+    if now < state.cliff_time {
         return 0;
     }
 
@@ -184,6 +200,10 @@ pub fn calculate_accrued_amount_checkpointed(
     if checkpointed_at >= end_time {
         // Stream already ended; only the checkpointed amount is payable.
         return checkpointed_amount.min(deposit_amount).max(0);
+    }
+
+    if state.deposit_amount <= 0 {
+        return 0;
     }
 
     let elapsed_now = now.min(state.end_time);

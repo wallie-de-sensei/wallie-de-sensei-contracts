@@ -6,7 +6,7 @@
 use fluxora_stream::{CreateStreamParams, FluxoraStream, FluxoraStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
-    token::{Client as TokenClient, StellarAssetClient},
+    token::Client as TokenClient,
     Address, Env,
 };
 
@@ -14,6 +14,7 @@ struct Ctx<'a> {
     env: Env,
     client: FluxoraStreamClient<'a>,
     sender: Address,
+    #[allow(dead_code)]
     token: TokenClient<'a>,
 }
 
@@ -26,7 +27,9 @@ impl<'a> Ctx<'a> {
         let client = FluxoraStreamClient::new(&env, &contract_id);
 
         let token_admin = Address::generate(&env);
-        let token_id = env.register_stellar_asset_contract_v2(token_admin.clone()).address();
+        let token_id = env
+            .register_stellar_asset_contract_v2(token_admin.clone())
+            .address();
         let token = TokenClient::new(&env, &token_id);
         let stellar_asset = soroban_sdk::token::StellarAssetClient::new(&env, &token_id);
 
@@ -36,7 +39,12 @@ impl<'a> Ctx<'a> {
 
         client.init(&token_id, &admin);
 
-        Self { env, client, sender, token }
+        Self {
+            env,
+            client,
+            sender,
+            token,
+        }
     }
 
     fn create_stream_with_duration(&self, recipient: &Address, duration: u64) -> u64 {
@@ -129,7 +137,7 @@ fn test_recipient_index_readable_after_adaptive_ttl_write() {
     ctx.create_stream_with_duration(&recipient, 86_400);
     ctx.create_stream_with_duration(&recipient, 31_536_000);
 
-    let index = ctx.client.get_recipient_streams(&recipient, &None, &None);
+    let index = ctx.client.get_recipient_streams(&recipient);
     assert_eq!(index.len(), 2);
 }
 
