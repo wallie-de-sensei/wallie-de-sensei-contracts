@@ -1,8 +1,10 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
 
-use fluxora_stream::FluxoraStreamClient;
-use soroban_sdk::{contract, contracterror, contractimpl, contracttype, symbol_short, Address, Env};
+use fluxora_stream::{ContractError as StreamContractErr, FluxoraStreamClient};
+use soroban_sdk::{
+    contract, contracterror, contractimpl, contracttype, symbol_short, Address, Env,
+};
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -19,6 +21,11 @@ pub enum FactoryError {
     InvalidCliff = 8,
     /// Factory stream creation is currently paused by admin.
     CreationPaused = 9,
+    /// The downstream FluxoraStream contract rejected creation because it is paused.
+    StreamContractPaused = 10,
+    /// The downstream FluxoraStream contract rejected creation for a reason other than paused.
+    /// This is a passthrough catch-all for unexpected downstream failures.
+    StreamContractError = 11,
 }
 
 #[contracttype]
@@ -314,10 +321,7 @@ impl FluxoraFactory {
 
         let stream_client = FluxoraStreamClient::new(&env, &stream_contract);
 
-        // We wrap the `try_create_stream` to gracefully handle underlying failures if needed,
-        // but for now, `.create_stream()` automatically panics with the underlying contract error
-        // if it fails, which is standard Soroban cross-contract call behavior.
-        let stream_id = stream_client.create_stream(
+        match stream_client.try_create_stream(
             &sender,
             &recipient,
             &deposit_amount,
@@ -328,8 +332,13 @@ impl FluxoraFactory {
             &withdraw_dust_threshold,
             &None,
             &fluxora_stream::StreamKind::Linear,
-        );
-
-        Ok(stream_id)
+        ) {
+            Ok(Ok(stream_id)) => Ok(stream_id),
+            // Recognized downstream contract error reported in the success frame.
+            Ok(Err(_)) => Err(FactoryError::StreamContractError),
+            Err(Ok(StreamContractErr::ContractPaused)) => Err(FactoryError::StreamContractPaused),
+            Err(Ok(_)) => Err(FactoryError::StreamContractError),
+            Err(Err(_)) => Err(FactoryError::StreamContractError),
+        }
     }
 }
