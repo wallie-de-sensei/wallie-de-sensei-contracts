@@ -1,9 +1,10 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
 
-use fluxora_stream::{ContractError as StreamContractErr, FluxoraStreamClient};
+use fluxora_stream::{ContractError as StreamContractErr, FluxoraStreamClient, StreamKind};
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, symbol_short, vec, Address, Env, Vec,
+    contract, contracterror, contractimpl, contracttype, symbol_short, vec, Address, Bytes, Env,
+    Vec,
 };
 
 /// Maximum number of stream IDs returned per page in `get_factory_streams_paginated`.
@@ -407,14 +408,21 @@ impl FluxoraFactory {
 
     /// Creates a new stream via the FluxoraStream contract after enforcing treasury policies.
     ///
+    /// # Parameters
+    /// - `stream_kind`: [`StreamKind::Linear`] for a standard vesting stream or
+    ///   [`StreamKind::CliffOnly`] for a one-shot cliff unlock. Forwarded verbatim
+    ///   to the stream contract; all policy checks (cap, allowlist, duration) apply
+    ///   regardless of kind.
+    /// - `memo`: Optional opaque correlation bytes forwarded to the stream contract
+    ///   and stored there. Length bounds are validated by the stream contract.
+    ///
     /// # Guard order (checked strictly in sequence)
-    /// 1. **CreationPaused** — rejects immediately, before any policy read, to
-    ///    avoid leaking allowlist or cap state during an incident.
+    /// 1. **CreationPaused** — rejects immediately, before any policy read.
     /// 2. Allowlist check
     /// 3. Deposit cap check
     /// 4. Time-range invariants
     /// 5. Minimum-duration check
-    /// 6. Rate-per-second bounds check (new)
+    /// 6. Rate-per-second bounds check
     /// 7. Cross-contract stream creation
     ///
     /// On success the returned stream ID is appended to the factory's [`DataKey::FactoryStreamIds`]
@@ -431,6 +439,8 @@ impl FluxoraFactory {
         cliff_time: u64,
         end_time: u64,
         withdraw_dust_threshold: i128,
+        stream_kind: StreamKind,
+        memo: Option<Bytes>,
     ) -> Result<u64, FactoryError> {
         // ── Guard 1: pause check (before any policy read) ───────────────────
         // Checked first so that no allowlist or cap state is observable when
@@ -520,8 +530,8 @@ impl FluxoraFactory {
             &cliff_time,
             &end_time,
             &withdraw_dust_threshold,
-            &None,
-            &fluxora_stream::StreamKind::Linear,
+            &memo,
+            &stream_kind,
         ) {
             Ok(Ok(stream_id)) => {
                 // --- Effect (post-interaction): record only after a successful creation ---

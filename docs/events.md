@@ -364,6 +364,64 @@ pub struct PauseRecord {
 }
 ```
 
+### 13) KeeperCancelled
+
+Emitted by `keeper_cancel` after all token transfers succeed (CEI-compliant). The
+event carries the full fee breakdown so off-chain indexers can reconstruct keeper
+economics without inspecting individual token transfers.
+
+**Fee accounting identity (always holds):**
+```
+keeper_fee + recipient_amount + sender_refund == deposit_amount - prior_withdrawn_amount
+```
+
+```
+topics: ["kp_cncl", <stream_id: u64>]
+data:   KeeperCancelled {
+          stream_id:        u64,    // stream that was cancelled
+          keeper:           Address, // keeper who triggered cancellation
+          keeper_fee:       i128,   // KEEPER_FEE_BPS (50 bps) of gross sender refund
+          recipient_amount: i128,   // accrued - prior withdrawals (may be 0)
+          sender_refund:    i128,   // unstreamed deposit minus keeper fee
+        }
+```
+
+Example (partial accrual, deposit=10000, accrued=5000):
+
+```json
+{
+  "topics": ["kp_cncl", 7],
+  "data": {
+    "stream_id": 7,
+    "keeper": "G...KEEPER...",
+    "keeper_fee": 25,
+    "recipient_amount": 5000,
+    "sender_refund": 4975
+  }
+}
+```
+
+Example (fully accrued, zero keeper fee):
+
+```json
+{
+  "topics": ["kp_cncl", 12],
+  "data": {
+    "stream_id": 12,
+    "keeper": "G...KEEPER...",
+    "keeper_fee": 0,
+    "recipient_amount": 1000,
+    "sender_refund": 0
+  }
+}
+```
+
+**Indexer notes:**
+- `keeper_fee` is always `floor(unstreamed * 50 / 10000)`.
+- A fully-accrued stream has `sender_refund = 0` and `keeper_fee = 0`.
+- The event is emitted in the same transaction as the state write to `Cancelled`;
+  no `StreamCancelled` event is emitted for keeper-initiated cancellations.
+
 ### 14) StreamHealthChanged
 
 Emitted by `decrease_rate_per_second`, `shorten_stream_end_time`, `top_up_stream`,
@@ -479,6 +537,7 @@ Commit message suggestion: `docs: add event schema and topics for indexers`
 | `trigger_auto_claim`                                         | `"ac_trig"`     |
 | `sweep_excess`                                               | `"ex_swept"`    |
 | `migrate_recipient_index`                                    | `"migrated"`    |
+| `keeper_cancel`                                              | `"kp_cncl"`     |
 | `decrease_rate_per_second`, `shorten_stream_end_time`, `top_up_stream`, `cancel_stream` | `"hlth_chg"` |
 
 If you change event topics or payloads in the contract, update this document and
