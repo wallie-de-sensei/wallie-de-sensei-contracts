@@ -55,6 +55,7 @@ pub struct Proposal {
     /// Target contract whose parameters should be changed upon execution.
     pub target: Address,
     /// Opaque calldata encoding the intended function call and arguments.
+    /// Must be non-empty (at least 1 byte) and must not exceed `MAX_CALLDATA_BYTES`.
     pub calldata: Bytes,
     /// List of co-signer addresses that have approved this proposal.
     pub approvals: Vec<Address>,
@@ -108,8 +109,8 @@ pub enum GovernanceError {
     DuplicateSigner = 17,
     /// Governance arithmetic would overflow instead of producing a valid deadline or ID.
     ArithmeticOverflow = 18,
-    /// Calldata bytes could not be decoded into a known CallData variant.
-    InvalidCalldata = 19,
+    /// Proposal calldata is empty; at least one byte is required.
+    CalldataEmpty = 19,
 }
 
 /// Storage keys for the governance contract.
@@ -664,6 +665,7 @@ impl FluxoraGovernance {
     ///
     /// # Errors
     /// - `NotASigner`: `proposer` is not in the registered signers list.
+    /// - `CalldataEmpty`: `calldata` is empty (zero bytes).
     /// - `CalldataTooLarge`: `calldata.len() > MAX_CALLDATA_BYTES`.
     /// - `ArithmeticOverflow`: proposal ID counter has reached `u32::MAX`.
     pub fn propose(
@@ -677,6 +679,10 @@ impl FluxoraGovernance {
         // O(1) signer membership check via Map index.
         if !Self::is_registered_signer(&env, &proposer)? {
             return Err(GovernanceError::NotASigner);
+        }
+
+        if calldata.len() == 0 {
+            return Err(GovernanceError::CalldataEmpty);
         }
 
         if calldata.len() > MAX_CALLDATA_BYTES {
@@ -2475,6 +2481,58 @@ mod tests {
         // Registered signer can approve.
         assert_eq!(ctx.client.is_signer(&ctx.signer_b), true);
         ctx.client.approve(&ctx.signer_b, &id);
+    }
+
+    // -----------------------------------------------------------------------
+    // Calldata validation (#733)
+    // -----------------------------------------------------------------------
+
+    /// Empty calldata is rejected before the proposal ID is consumed.
+    #[test]
+    fn test_propose_rejects_empty_calldata() {
+        let ctx = Ctx::setup();
+        let empty = Bytes::new(&ctx.env);
+        let before = ctx.client.proposal_count();
+        let result = ctx.client.try_propose(&ctx.signer_a, &ctx.dummy_target(), &empty);
+        assert_eq!(result, Err(Ok(GovernanceError::CalldataEmpty)));
+        // Proposal ID counter must not have advanced.
+        assert_eq!(ctx.client.proposal_count(), before);
+    }
+
+    /// One-byte calldata satisfies the minimum and is accepted.
+    #[test]
+    fn test_propose_accepts_one_byte_calldata() {
+        let ctx = Ctx::setup();
+        let one_byte = Bytes::from_slice(&ctx.env, &[0x01]);
+        let result = ctx.client.try_propose(&ctx.signer_a, &ctx.dummy_target(), &one_byte);
+        assert!(result.is_ok());
+    }
+
+    /// MAX_CALLDATA_BYTES-length calldata is still accepted (existing upper bound unchanged).
+    #[test]
+    fn test_propose_accepts_max_calldata() {
+        let ctx = Ctx::setup();
+        // Build exactly MAX_CALLDATA_BYTES bytes via repeated concatenation.
+        let mut calldata = Bytes::new(&ctx.env);
+        let one = Bytes::from_slice(&ctx.env, &[0xABu8]);
+        for _ in 0..MAX_CALLDATA_BYTES {
+            calldata.append(&one);
+        }
+        let result = ctx.client.try_propose(&ctx.signer_a, &ctx.dummy_target(), &calldata);
+        assert!(result.is_ok());
+    }
+
+    /// Calldata one byte over the maximum is still rejected with CalldataTooLarge.
+    #[test]
+    fn test_propose_rejects_oversized_calldata() {
+        let ctx = Ctx::setup();
+        let mut calldata = Bytes::new(&ctx.env);
+        let one = Bytes::from_slice(&ctx.env, &[0xFFu8]);
+        for _ in 0..MAX_CALLDATA_BYTES + 1 {
+            calldata.append(&one);
+        }
+        let result = ctx.client.try_propose(&ctx.signer_a, &ctx.dummy_target(), &calldata);
+        assert_eq!(result, Err(Ok(GovernanceError::CalldataTooLarge)));
     }
 
     #[test]
