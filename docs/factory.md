@@ -101,7 +101,25 @@ These views are permissionless and do not mutate factory state.
 > 
 > If a user (e.g. the treasury multi-sig itself) directly calls `create_stream` on the `FluxoraStream` contract, these policies will be bypassed. To truly lock down treasury funds, the token vault or multi-sig must be configured to *only* approve transactions that invoke the `fluxora_factory` contract.
 
-## Architecture & CEI
+## Stream Kind and Memo
+
+`FluxoraFactory::create_stream` accepts two additional parameters that are
+forwarded verbatim to `FluxoraStream::create_stream`:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `stream_kind` | `fluxora_stream::StreamKind` | `StreamKind::Linear` (standard time-vesting) or `StreamKind::CliffOnly` (full deposit unlocked at cliff). |
+| `memo` | `Option<soroban_sdk::Bytes>` | Optional opaque correlation bytes stored on the stream and readable via `get_stream_memo`. Length validation is delegated to the stream contract. |
+
+All policy checks (allowlist, deposit cap, minimum duration, time invariants,
+rate bounds) are enforced **before** the cross-contract call, regardless of
+`stream_kind`. A `CliffOnly` stream is subject to exactly the same treasury
+policy guards as a `Linear` stream.
+
+For `CliffOnly` streams the `rate_per_second` argument is ignored — the stream
+contract sets the effective rate to `0` internally.
+
+
 
 The factory contract follows the Checks-Effects-Interactions (CEI) pattern implicitly:
 1. **Checks**: Validates the recipient against the allowlist, validates the stream time relationship, and bounds the deposit and duration against the configured caps.
@@ -138,8 +156,8 @@ must cover both the wrapper call and the nested stream call:
 ```mermaid
 flowchart TD
     client[Client transaction]
-    factory["fluxora_factory.create_stream(sender, recipient, deposit, rate, start, cliff, end, dust_threshold, memo, kind)"]
-    stream["fluxora_stream.create_stream(sender, recipient, deposit, rate, start, cliff, end, dust_threshold, memo, kind)"]
+    factory["fluxora_factory.create_stream(sender, recipient, deposit, rate, start, cliff, end, dust_threshold, stream_kind, memo)"]
+    stream["fluxora_stream.create_stream(sender, recipient, deposit, rate, start, cliff, end, dust_threshold, memo, stream_kind)"]
     token["token.transfer_from(sender -> fluxora_stream, deposit)"]
 
     client --> factory
@@ -187,12 +205,8 @@ withdraw_dust_threshold = 0
 The client prepares a transaction whose root host function invokes
 `fluxora_factory.create_stream` with those values. During simulation/preparation,
 the authorization tree must contain `G_SENDER` for the root factory call and the
-nested `fluxora_stream.create_stream` sub-invocation with:
-
-```text
-memo = None
-kind = Linear
-```
+nested `fluxora_stream.create_stream` sub-invocation with the forwarded
+`stream_kind` and `memo` arguments.
 
 `G_SENDER` signs that prepared authorization tree. The factory admin does not
 sign stream creation unless the admin is also the `sender`. The recipient does
@@ -290,8 +304,8 @@ This document is aligned with the current implementation as follows:
   instance storage TTL and prevent config expiration during idle periods.
 - `FluxoraFactory::create_stream` enforces allowlist, cap, and duration checks
   before calling `sender.require_auth()`.
-- The factory forwards a linear `FluxoraStream::create_stream` call with
-  `memo = None` and `StreamKind::Linear`.
+- The factory forwards `stream_kind` and `memo` verbatim to
+  `FluxoraStream::create_stream`; all policy gates apply regardless of kind.
 - `FluxoraStream::create_stream` calls `sender.require_auth()` before validating
   parameters and pulling `deposit_amount` from `sender`.
 - `FluxoraFactory::create_streams` appends all returned stream IDs to the
@@ -299,9 +313,5 @@ This document is aligned with the current implementation as follows:
   succeeds, with a single TTL bump for the whole batch (see `append_stream_ids_batch`
   in `contracts/factory/src/lib.rs`).
 - `contracts/stream/tests/factory_policy.rs` covers policy input validation,
-  factory policy gates, append-only error discriminants, and admin-guarded
-  policy updates that surround this authorization model.
-- `contracts/factory/tests/factory_stream_e2e.rs` includes regression tests for
-  the batch registry path: count increase, insertion-order pagination, empty-batch
-  no-op, single-element batch, single-path parity, and mixed single+batch accumulation.
-- Every state-changing entrypoint emits a structured event; see the Events table above.
+  factory policy gates, `CliffOnly` kind forwarding, memo forwarding,
+  append-only error discriminants, and admin-guarded policy updates.
