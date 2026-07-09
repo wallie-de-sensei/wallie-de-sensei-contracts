@@ -1634,12 +1634,20 @@ fn validate_metadata(
     for (key, value) in metadata.iter() {
         let key_len = key.len();
         let val_len = value.len();
-
+        
+        total_bytes = total_bytes.saturating_add(key_len).saturating_add(val_len);
+        if total_bytes > MAX_METADATA_TOTAL_BYTES {
+            return Err(ContractError::MetadataTooLarge);
+        }
+    }
+    
+    Ok(())
+}
 
 // Internal Helpers
 // ---------------------------------------------------------------------------
 
-impl FluxoraStream {
+impl WallieDeSenseiStream {
     #[allow(clippy::too_many_arguments)]
     fn validate_stream_params(
         env: &Env,
