@@ -1,4 +1,4 @@
-# Fluxora Contract WASM Checksums
+# Wallie de Sensei Contract WASM Checksums
 #
 # Reference SHA256 checksums for tracked reproducible WASM builds.
 # CI verifies that a fresh build produces byte-identical artifacts.
@@ -17,4 +17,4 @@
 #   - Build uses --release with wasm32-unknown-unknown target
 #   - No environment-dependent flags beyond the pinned toolchain
 #
-37cc58ea962226b11e7c1c74db0d28e42a27de85461abcb06a5478066606f174  fluxora_stream.wasm
+37cc58ea962226b11e7c1c74db0d28e42a27de85461abcb06a5478066606f174  wallie_de_sensei_stream.wasm

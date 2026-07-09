@@ -1,8 +1,8 @@
 [package]
-name = "fluxora_governance"
+name = "wallie_de_sensei_governance"
 version = "0.1.0"
 edition = "2021"
-description = "Minimal timelock governance contract for Fluxora protocol parameter changes"
+description = "Minimal timelock governance contract for Wallie de Sensei protocol parameter changes"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
