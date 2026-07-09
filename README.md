@@ -1,6 +1,6 @@
-# Fluxora Contracts
+# Wallie de Sensei Contracts
 
-Soroban smart contracts for the Fluxora treasury streaming protocol on Stellar. Stream USDC from a treasury to recipients over time with configurable rate, duration, and cliff.
+Soroban smart contracts for the Wallie de Sensei treasury streaming protocol on Stellar. Stream USDC from a treasury to recipients over time with configurable rate, duration, and cliff.
 
 ## Documentation
 
@@ -131,8 +131,8 @@ When upgrading versions:
 ### Clone and prerequisites
 
 ```bash
-git clone https://github.com/Fluxora-Org/Fluxora-Contracts.git
-cd Fluxora-Contracts
+git clone https://github.com/Wallie-de-sensei/Wallie-de-sensei-Contracts.git
+cd Wallie-de-sensei-Contracts
 ```
 
 - **Rust 1.94.1** — Pinned in `rust-toolchain.toml` (auto-enforced via `rustup`)
@@ -218,7 +218,7 @@ stellar contract invoke --id $(cat .contract_id) -- get_config
 ## Project structure
 
 ```
-fluxora-contracts/
+wallie-de-sensei-contracts/
   Cargo.toml                        # workspace
   rust-toolchain.toml               # pinned Rust version
   contracts/
@@ -285,8 +285,8 @@ See [docs/security.md](docs/security.md#reproducible-wasm-builds) for the full r
 
 ## Related repos
 
-- **[fluxora-backend](../Fluxora-Backend)** — API server and middleware (separate repository)
-- **fluxora-frontend** — Dashboard and recipient UI (separate repository)
+- **[wallie-de-sensei-backend](../Wallie-de-sensei-backend)** — API server and middleware (separate repository)
+- **wallie-de-sensei-frontend** — Dashboard and recipient UI (separate repository)
 
 Each is a separate Git repository.
 ---
