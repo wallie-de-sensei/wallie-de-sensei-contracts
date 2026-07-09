@@ -285,8 +285,8 @@ See [docs/security.md](docs/security.md#reproducible-wasm-builds) for the full r
 
 ## Related repos
 
-- **fluxora-backend** — API and Horizon sync
-- **fluxora-frontend** — Dashboard and recipient UI
+- **[fluxora-backend](../Fluxora-Backend)** — API server and middleware (separate repository)
+- **fluxora-frontend** — Dashboard and recipient UI (separate repository)
 
 Each is a separate Git repository.
 ---
