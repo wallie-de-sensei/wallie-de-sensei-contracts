@@ -2,6 +2,18 @@
 
 Soroban smart contracts for the Wallie de Sensei treasury streaming protocol on Stellar. Stream USDC from a treasury to recipients over time with configurable rate, duration, and cliff.
 
+## 🚀 Quick Start
+
+New to the project? Start here:
+
+1. **Clone the repository**: `git clone https://github.com/wallie-de-sensei/wallie-de-sensei-contracts.git`
+2. **Install Rust 1.94.1**: Automatically enforced via `rust-toolchain.toml`
+3. **Build the contracts**: `cargo build --workspace`
+4. **Run tests**: `cargo test --workspace`
+5. **Read the docs**: Check out [docs/streaming.md](docs/streaming.md) for contract details
+
+For Wave Program contributors, see [plan.md](plan.md) for available tasks and sprint cycles.
+
 ## Documentation
 
 
