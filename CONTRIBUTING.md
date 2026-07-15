@@ -1,112 +1,227 @@
-# Contributing to Fluxora Contracts
+# Contributing to Wallie de Sensei Contracts
 
-First off, thank you for considering contributing to Fluxora! It's people like you that make open-source software such a great community.
+Thank you for your interest in contributing to Wallie de Sensei! This guide will help you get started with contributing through the Wave Program.
 
-## How to Contribute
+## 🌊 Wave Program
 
-### 1. Fork & Clone
+The Wave Program is our structured contribution system where maintainers create scoped issues for contributors to pick up during sprint cycles. See [plan.md](plan.md) for the types of work available.
 
-1. Fork the repository to your own GitHub account.
-2. Clone the project to your local machine.
-3. Add the original repository as a remote ("upstream").
+## Getting Started
 
-### 2. Branch Naming Conventions
+### 1. Set Up Your Development Environment
 
-Always create a new branch for your work. Do not commit directly to the `main` branch. Please use the following prefixes for your branch names:
+```bash
+# Clone the repository
+git clone https://github.com/wallie-de-sensei/wallie-de-sensei-contracts.git
+cd wallie-de-sensei-contracts
 
-- `feature/` - for new features (e.g., `feature/multi-period-attestations`)
-- `fix/` - for bug fixes (e.g., `fix/stream-overflow`)
-- `docs/` - for documentation updates (e.g., `docs/contributing`)
-- `test/` - for adding or updating tests (e.g., `test/cancel-from-paused`)
+# Install Rust (version 1.94.1 is automatically enforced)
+rustup toolchain install
 
-### 3. Development Guidelines
+# Add WebAssembly target
+rustup target add wasm32-unknown-unknown
 
-- **Write Tests:** All new code must include comprehensive unit tests.
-- **Maintain Coverage:** We enforce a strict **minimum of 95% test coverage**. PRs that drop coverage below this threshold will not be merged.
-- **Snapshot Tests:** All behavior changes must update snapshot tests. See [Snapshot Test Workflow](docs/snapshot-tests.md).
-- **Run Linters:** Ensure your code is properly formatted and passes all linting checks before opening a PR.
-- **Update Documentation:** If you are adding a new feature or changing an API, please update the relevant documentation (and NatSpec comments) alongside your code.
+# Build the project
+cargo build --workspace
 
-### 4. Snapshot Test Workflow
+# Run tests
+cargo test --workspace
+```
 
-When your changes affect contract behavior:
+### 2. Find an Issue
 
-1. **Run tests locally:**
+Browse open issues labeled with:
+- `wave-program` - Issues available for Wave Program contributors
+- `good-first-issue` - Great for newcomers
+- `bug`, `feature`, `documentation`, `testing` - Different work types
 
+### 3. Claim an Issue
+
+Comment on the issue to let maintainers know you're working on it. We'll assign it to you and provide any additional context needed.
+
+## Development Workflow
+
+### Branch Naming
+
+Create a descriptive branch name:
+- `fix/issue-number-short-description` for bug fixes
+- `feat/issue-number-short-description` for features
+- `docs/issue-number-short-description` for documentation
+- `test/issue-number-short-description` for tests
+
+Example: `fix/42-stream-calculation-overflow`
+
+### Making Changes
+
+1. **Write clear, documented code** - Add comments for complex logic
+2. **Follow Rust conventions** - Use `cargo fmt` and `cargo clippy`
+3. **Maintain test coverage** - Aim for 95%+ coverage on new code
+4. **Update documentation** - Keep docs in sync with code changes
+
+### Testing Requirements
+
+Run the full test suite before submitting:
+
+```bash
+# Run all tests
+cargo test --workspace
+
+# Run specific contract tests
+cargo test -p fluxora_stream
+cargo test -p factory
+cargo test -p governance
+
+# Run with verbose output
+cargo test -- --nocapture
+
+# Run property-based tests with more cases
+PROPTEST_CASES=10000 cargo test -p fluxora_stream --test balance_conservation
+```
+
+### Code Quality Checks
+
+```bash
+# Format code
+cargo fmt --all
+
+# Run linter
+cargo clippy --all-targets --all-features -- -D warnings
+
+# Build for WebAssembly
+cargo build --target wasm32-unknown-unknown --workspace
+```
+
+## Submitting Your Work
+
+### Pull Request Process
+
+1. **Commit your changes** with clear messages:
    ```bash
-   cargo test -p fluxora_stream
+   git add .
+   git commit -m "fix: resolve stream calculation overflow in edge case"
    ```
 
-2. **If snapshot tests fail and changes are intentional:**
-
+2. **Push to your branch**:
    ```bash
-   SOROBAN_SNAPSHOT_UPDATE=1 cargo test -p fluxora_stream
+   git push origin fix/42-stream-calculation-overflow
    ```
 
-3. **Review snapshot changes:**
+3. **Open a Pull Request** with:
+   - Clear title describing the change
+   - Reference to the issue number (e.g., "Fixes #42")
+   - Description of what changed and why
+   - Test results and coverage information
+   - Screenshots or examples if applicable
 
-   ```bash
-   git diff contracts/stream/test_snapshots/
-   ```
+### Pull Request Template
 
-4. **Commit with clear message:**
+```markdown
+## Description
+Brief description of changes
 
-   ```bash
-   git add contracts/stream/test_snapshots/
-   git commit -m "test: update snapshots for [specific change]"
-   ```
+## Related Issue
+Fixes #issue-number
 
-5. **Document in PR:** Explain why snapshots changed and what behavior changed.
+## Changes Made
+- Bullet list of key changes
+- Include file paths if helpful
 
-See [Snapshot Test Documentation](docs/snapshot-tests.md) for complete guidance.
+## Testing
+- [ ] All existing tests pass
+- [ ] Added new tests for changes
+- [ ] Manually tested functionality
+- [ ] Property-based tests pass (if applicable)
 
-### 5. Opening a Pull Request
+## Checklist
+- [ ] Code follows project style guidelines
+- [ ] Documentation updated
+- [ ] No compiler warnings
+- [ ] Commit messages are clear
+```
 
-1. Push your changes to your fork.
-2. Open a Pull Request against the `main` branch of the upstream repository.
-3. Ensure your PR title is descriptive and follows conventional commit formatting.
-4. Link the PR to the relevant issue(s) it resolves.
-5. **If snapshots changed:** Use the PR template to document what changed and why.
-6. Wait for a maintainer to review your code.
+## Code Review
 
-## Testing Requirements
+Maintainers will review your PR and may:
+- Request changes or clarifications
+- Suggest improvements
+- Ask for additional tests
+- Approve and merge
+
+Please be responsive to feedback and iterate on your submission.
+
+## Testing Standards
 
 ### Unit Tests
+- Test each function's happy path and edge cases
+- Use descriptive test names: `test_withdraw_after_cliff_period`
+- Include boundary value tests
 
-- All new functions must have unit tests
-- Edge cases must be covered
-- Error conditions must be tested
+### Integration Tests
+- Test complete workflows end-to-end
+- Verify contract interactions
+- Test authorization and access control
 
-### Snapshot Tests
+### Property-Based Tests
+- Use `proptest` for randomized testing
+- Define invariants that must always hold
+- Add regression test cases
 
-- All state transitions must have snapshot coverage
-- Authorization boundaries must be explicit
-- Event emissions must be verified
-- See [Snapshot Test Authoring Guide](docs/snapshot-test-authoring-guide.md)
+### Example Test Structure
 
-### Coverage
+```rust
+#[test]
+fn test_stream_accrual_respects_cliff() {
+    let env = Env::default();
+    // Setup
+    let contract = create_contract(&env);
+    
+    // Test before cliff
+    assert_eq!(contract.calculate_accrued(stream_id), 0);
+    
+    // Test after cliff
+    advance_time(&env, cliff_time + 1);
+    assert!(contract.calculate_accrued(stream_id) > 0);
+}
+```
 
-- Minimum 95% code coverage required
-- Run coverage report: `cargo tarpaulin --features testutils -p fluxora_stream`
+## Documentation Standards
 
-## Documentation Requirements
+- Add inline comments for complex logic
+- Update relevant markdown files in `docs/`
+- Include examples in documentation
+- Document all public functions and types
+- Explain _why_, not just _what_
 
-When contributing, update:
+## Security Considerations
 
-- Code comments for complex logic
-- Function documentation for public APIs
-- `docs/` files for behavior changes
-- `README.md` for user-facing changes
-- Snapshot test documentation if test patterns change
+When working on this codebase:
 
-## Found a Bug or Have a Feature Request?
+1. **Never compromise CEI (Checks-Effects-Interactions) ordering**
+2. **Always validate input parameters**
+3. **Test overflow scenarios for arithmetic operations**
+4. **Verify authorization on all state-changing functions**
+5. **Consider reentrancy implications**
+6. **Test with malicious inputs**
 
-If you find a bug or have a suggestion, please open an issue first. Be sure to check out our [Issue Templates](.github/ISSUE_TEMPLATE) (if available) to provide all the necessary context.
+See [docs/security.md](docs/security.md) for detailed security guidelines.
 
-## Resources
+## Getting Help
 
-- [Snapshot Test Documentation](docs/snapshot-tests.md)
-- [Snapshot Test Authoring Guide](docs/snapshot-test-authoring-guide.md)
-- [Snapshot Workflow Quick Reference](docs/snapshot-workflow-quick-reference.md)
-- [Coverage Matrix](docs/snapshot-test-coverage-matrix.md)
-- [Audit Documentation](docs/audit.md)
+- **Questions?** Ask in the issue you're working on
+- **Stuck?** Request guidance from maintainers
+- **Found a problem?** Open a new issue with details
+
+## Recognition
+
+Contributors will be recognized in:
+- Release notes and changelogs
+- GitHub contributor list
+- Wave Program leaderboards (coming soon)
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the same license as the project.
+
+---
+
+Happy coding! 🚀
