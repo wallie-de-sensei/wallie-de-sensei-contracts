@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Fluxora Contracts will be documented in this file.
+All notable changes to Wallie de Sensei Contracts will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,17 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `fluxora_factory.create_stream` now accepts `memo: Option<Bytes>` and `kind: StreamKind`, forwarding them to `fluxora_stream.create_stream`.
-- Added `fluxora_factory.create_streams` batch wrapper that enforces allowlist, per-stream cap, minimum duration, and optional aggregate-batch cap semantics before calling `fluxora_stream.create_streams`.
-- Added `set_batch_cap_enforcement` to toggle aggregate batch-cap enforcement.
-
-### Changed
-- `fluxora_factory` now validates memo length against `fluxora_stream::MAX_MEMO_BYTES` before making the downstream call.
-- Bumped `CONTRACT_VERSION` to `5` due to breaking ABI changes in error discriminants.
-
-### Fixed
-- Assigned unique `u32` discriminants to all `ContractError` variants to resolve the collision on code 23.
-- Declared previously missing error variants: `ClockRegression`, `WithdrawalTooFrequent`, `UnsupportedStreamKind`, `KeeperGracePeriodNotElapsed`, `MetadataTooLarge`, `PauseCooldownActive`, and `RateCapExceeded`.
+- Wave Program contribution system for community contributors
+- Comprehensive documentation suite for developers and auditors
+- Code of Conduct and contribution guidelines
+- MIT License for open source distribution
 
 ---
 
@@ -224,5 +217,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/Fluxora-Org/Fluxora-Contracts/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Fluxora-Org/Fluxora-Contracts/releases/tag/v0.1.0
+[Unreleased]: https://github.com/wallie-de-sensei/wallie-de-sensei-contracts/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/wallie-de-sensei/wallie-de-sensei-contracts/releases/tag/v0.1.0
