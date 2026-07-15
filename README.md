@@ -1,24 +1,731 @@
-# Wallie de Sensei Contracts
+# Wallie de Sensei Smart Contracts
 
-Soroban smart contracts for the Wallie de Sensei treasury streaming protocol on Stellar. Stream USDC from a treasury to recipients over time with configurable rate, duration, and cliff.
+**Enterprise-grade Soroban smart contracts for programmable treasury management and token streaming on Stellar.**
 
-## 🚀 Quick Start
+[![Stellar](https://img.shields.io/badge/Stellar-Soroban-7D00FF?logo=stellar)](https://stellar.org)
+[![Rust](https://img.shields.io/badge/Rust-1.94.1-orange?logo=rust)](https://www.rust-lang.org)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Wave Program](https://img.shields.io/badge/Stellar-Wave%20Program-00BFFF)](https://github.com/wallie-de-sensei/wallie-de-sensei-contracts)
 
-New to the project? Start here:
+---
 
-1. **Clone the repository**: `git clone https://github.com/wallie-de-sensei/wallie-de-sensei-contracts.git`
-2. **Install Rust 1.94.1**: Automatically enforced via `rust-toolchain.toml`
-3. **Build the contracts**: `cargo build --workspace`
-4. **Run tests**: `cargo test --workspace`
-5. **Read the docs**: Check out [docs/streaming.md](docs/streaming.md) for contract details
+## 📋 Table of Contents
 
-For Wave Program contributors, see [plan.md](plan.md) for available tasks and sprint cycles.
+- [On-Chain System Overview](#on-chain-system-overview--value-proposition)
+- [Contract Architecture](#contract-relationship--architecture)
+- [Repository Scope](#repository-scope-of-work-sow--contract-matrix)
+- [Transaction Flow](#transaction-flow--security-sequence)
+- [Technical Stack](#soroban-tech-stack-development--compilation)
+- [Security & Auditing](#security-auditing--guardrails)
+- [Contributing](#contributing)
 
-## Documentation
+---
 
+## 🎯 On-Chain System Overview & Value Proposition
 
+Wallie de Sensei is a **decentralized treasury streaming protocol** built on Stellar's Soroban smart contract platform. It enables organizations to automate token-based compensation, vesting schedules, and continuous payment flows with cryptographic precision and full on-chain auditability.
 
-- **[Stream contract](docs/streaming.md)** — Lifecycle, accrual formula, cliff/end_time, access control, events, and error codes.
+### Core Value Propositions
+
+**1. Programmable Payment Streams**
+- Lock tokens into time-bounded streams with configurable rates, cliffs, and durations
+- Recipients withdraw accrued tokens permissionlessly at any time after the cliff period
+- Senders retain administrative control (pause, cancel, rate adjustments) while streams are active
+
+**2. Treasury Management Primitives**
+- **Factory-gated stream creation**: Enforce allowlists, deposit caps, and minimum durations
+- **Governance-controlled parameters**: Multi-signature approval system for critical protocol changes
+- **Batch operations**: Create or withdraw from multiple streams atomically to minimize gas costs
+
+**3. Enterprise Financial Mechanisms**
+- **Cliff vesting**: Lock liquidity until a milestone timestamp, then enable linear accrual
+- **Cliff-only unlocks**: One-shot full-deposit releases at a target date (grants, retroactive payments)
+- **Keeper incentives**: Decentralized cleanup of expired streams with protocol fee splits
+- **Auto-claim destinations**: Recipients pre-authorize a final withdrawal address for permissionless finalization
+
+**4. Off-Chain Integration Layer**
+- Comprehensive event emission for real-time indexing by backend systems
+- Structured metadata fields (invoice IDs, project codes) embedded on-chain
+- Paginated query endpoints for dashboard UIs and accounting reconciliation
+
+### Use Cases
+
+| Scenario | Implementation |
+|----------|----------------|
+| **Payroll streaming** | Create monthly streams from treasury to employees with 30-day linear vesting |
+| **Investor vesting** | Cliff-only streams for seed round tokens unlocking after 12-month lockup |
+| **Contractor payments** | Factory-enforced allowlist ensures only approved vendors receive streams |
+| **Grant distribution** | Governance-approved parameter changes (rate caps, recipient allowlists) |
+| **DAO treasury ops** | Multi-signature governance contract authorizes all admin-level mutations |
+
+---
+
+---
+
+## 🏗️ Contract Relationship & Architecture
+
+### System Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph "Off-Chain Infrastructure"
+        UI[Web Dashboard/Mobile App]
+        Backend[wallie-de-sensei-backend<br/>Event Indexer & Cache]
+        RPC[Stellar RPC Node<br/>Horizon/Soroban RPC]
+    end
+    
+    subgraph "On-Chain Contracts (Stellar Mainnet)"
+        Factory[Factory Contract<br/>Policy Enforcement Layer]
+        Stream[Stream Contract<br/>Core Logic Engine]
+        Gov[Governance Contract<br/>Multi-Sig Parameter Control]
+        Token[Token Contract<br/>Stellar Asset Contract]
+    end
+    
+    subgraph "Data Flow"
+        Events[Event Stream<br/>StreamCreated, Withdrawal, etc.]
+    end
+    
+    UI -->|Submit Txns| RPC
+    Backend -->|Poll Events| RPC
+    Backend -->|Cache Stream State| Backend
+    UI -->|Query State| Backend
+    
+    RPC -->|invoke_contract| Factory
+    RPC -->|invoke_contract| Stream
+    RPC -->|invoke_contract| Gov
+    
+    Factory -->|"create_stream<br/>(validate allowlist)"| Stream
+    Factory -->|transfer_from| Token
+    Stream -->|transfer| Token
+    Stream -->|emit events| Events
+    Factory -->|emit events| Events
+    Gov -->|"set_admin<br/>set_max_rate"| Stream
+    Gov -->|"set_cap<br/>set_allowlist"| Factory
+    Events -->|ingest| Backend
+    
+    style Factory fill:#4A90E2,stroke:#2E5C8A,color:#fff
+    style Stream fill:#7B68EE,stroke:#4B0082,color:#fff
+    style Gov fill:#FF6B6B,stroke:#C92A2A,color:#fff
+    style Token fill:#51CF66,stroke:#2F9E44,color:#fff
+    style Backend fill:#FFA500,stroke:#CC8400,color:#fff
+```
+
+### Contract Interaction Patterns
+
+#### 1. Stream Creation Flow
+```
+User → Factory.create_stream() 
+  ├─ Validate: recipient in allowlist
+  ├─ Validate: deposit ≤ max_cap
+  ├─ Validate: duration ≥ min_duration
+  ├─ Validate: rate within bounds
+  └─ Stream.create_stream()
+      ├─ Token.transfer_from(sender, contract, deposit)
+      ├─ Persist stream state
+      └─ Emit: StreamCreated(stream_id, sender, recipient, ...)
+```
+
+#### 2. Withdrawal Flow
+```
+Recipient → Stream.withdraw(stream_id)
+  ├─ Auth: recipient.require_auth()
+  ├─ Calculate: accrued = min((now - start) × rate, deposit)
+  ├─ Calculate: withdrawable = accrued - withdrawn
+  ├─ Token.transfer(contract, recipient, withdrawable)
+  ├─ Update: stream.withdrawn_amount += withdrawable
+  ├─ Check: if withdrawn == deposit → status = Completed
+  └─ Emit: Withdrawal(stream_id, recipient, withdrawable)
+```
+
+#### 3. Governance Parameter Update
+```
+Proposer → Governance.propose(target, calldata)
+Co-signers → Governance.approve(proposal_id) [× threshold times]
+  └─ When quorum reached → timelock starts (48h)
+Executor → Governance.execute(proposal_id)
+  └─ Stream.set_max_rate_per_second(new_rate)
+      └─ Emit: RateBoundsUpdated(min, max)
+```
+
+### Backend Integration Points
+
+The `wallie-de-sensei-backend` service indexes on-chain events for:
+- **Real-time dashboards**: Stream health, accrual rates, withdrawal history
+- **Notification triggers**: Stream completion, underfunding alerts, governance proposals
+- **Accounting exports**: Paginated stream queries (`get_factory_streams_paginated`)
+- **Caching layer**: Reduces RPC load by maintaining indexed stream state
+
+---
+
+## 📊 Repository Scope of Work (SOW) & Contract Matrix
+
+### Contract Responsibility Matrix
+
+| Contract | Primary Responsibility | Key Methods | State Managed On-Chain | Events for Backend | Status |
+|----------|------------------------|-------------|------------------------|-------------------|--------|
+| **`stream`**<br/>`contracts/stream` | Core streaming logic<br/>Accrual calculations<br/>Recipient withdrawals<br/>Stream lifecycle | `init`<br/>`create_stream`<br/>`withdraw`<br/>`pause_stream`<br/>`cancel_stream`<br/>`update_rate_per_second`<br/>`close_completed_stream` | • Stream configs (sender, recipient, deposit, rate)<br/>• Accrual checkpoints<br/>• Withdrawal history<br/>• Stream status (Active/Paused/Completed/Cancelled)<br/>• Template registry<br/>• Recipient stream index | ✅ `StreamCreated`<br/>✅ `Withdrawal`<br/>✅ `StreamPaused/Resumed`<br/>✅ `StreamCancelled`<br/>✅ `RateUpdated`<br/>✅ `StreamCompleted` | ✅ Deployed |
+| **`factory`**<br/>`contracts/factory` | Policy enforcement gateway<br/>Allowlist validation<br/>Deposit caps<br/>Rate bounds | `init`<br/>`create_stream`<br/>`set_allowlist`<br/>`set_cap`<br/>`set_rate_bounds`<br/>`is_allowlisted` | • Admin address<br/>• Stream contract pointer<br/>• Max deposit cap<br/>• Min stream duration<br/>• Rate bounds (min/max)<br/>• Recipient allowlist<br/>• Factory-created stream registry | ✅ `FactoryStreamCreated`<br/>✅ `AllowlistUpdated`<br/>✅ `CapUpdated`<br/>✅ `RateBoundsUpdated` | ✅ Deployed |
+| **`governance`**<br/>`contracts/governance` | Multi-signature proposals<br/>Timelock enforcement<br/>Parameter change authorization | `init`<br/>`propose`<br/>`approve`<br/>`execute`<br/>`add_signer`<br/>`remove_signer` | • Admin address<br/>• Co-signer list<br/>• Approval threshold<br/>• Proposal records<br/>• Quorum timestamps<br/>• Execution status | ✅ `ProposalCreated`<br/>✅ `ProposalApproved`<br/>✅ `QuorumReached`<br/>✅ `ProposalExecuted` | ✅ Deployed |
+
+### On-Chain vs. Off-Chain Scope
+
+#### ✅ Handled Strictly On-Chain
+- **Token custody**: All stream deposits locked in stream contract
+- **Accrual math**: Time-based token release calculations (`(now - start) × rate_per_second`)
+- **Authorization**: Soroban native `require_auth()` for sender/recipient/admin operations
+- **State transitions**: Stream status (Active → Paused → Cancelled → Completed)
+- **Atomicity**: Batch operations (create/withdraw multiple streams) execute all-or-nothing
+- **Governance enforcement**: 48-hour timelock + quorum threshold validation
+
+#### 🔄 Indexed & Cached Off-Chain (Backend)
+- **Event aggregation**: Subscribe to contract events via Stellar RPC
+- **Stream search**: Full-text search across sender/recipient addresses, metadata fields
+- **Pagination**: Serve UI queries from indexed DB instead of on-chain iteration
+- **Notifications**: Email/push alerts on stream completion, low balance warnings
+- **Analytics**: Historical withdrawal patterns, treasury velocity metrics
+- **Reconciliation**: Match on-chain events to off-chain invoices via embedded metadata
+
+#### 🚫 Not Handled by Contracts
+- **Fiat conversion**: Backend converts token amounts to USD for UI display
+- **User authentication**: Backend validates wallet signatures for dashboard access
+- **Email delivery**: Notification service triggered by backend event processing
+- **Compliance reports**: Backend generates CSV exports from indexed stream data
+
+---
+
+## 🔄 Transaction Flow & Security Sequence
+
+### Critical Flow: Factory-Gated Stream Creation with Authorization
+
+```mermaid
+sequenceDiagram
+    participant Sender
+    participant Factory
+    participant Stream
+    participant Token
+    participant Backend
+    
+    Sender->>Factory: create_stream(recipient, 10000 USDC, 1 USDC/sec)
+    activate Factory
+    Factory->>Factory: require_auth(sender)
+    Factory->>Factory: validate_allowlist(recipient)
+    Factory->>Factory: check deposit ≤ max_cap
+    Factory->>Factory: check rate within bounds
+    Factory->>Factory: check duration ≥ min_duration
+    
+    Factory->>Stream: create_stream(sender, recipient, params)
+    activate Stream
+    Stream->>Stream: require_auth(sender)
+    Stream->>Stream: validate cliff ≤ end_time
+    Stream->>Stream: validate rate × duration = deposit
+    
+    Stream->>Token: transfer_from(sender, stream_contract, 10000)
+    activate Token
+    Token->>Token: check_balance(sender) ≥ 10000
+    Token->>Token: check_allowance(sender, stream_contract) ≥ 10000
+    Token-->>Stream: ✅ Transfer success
+    deactivate Token
+    
+    Stream->>Stream: persist stream state (storage)
+    Stream->>Stream: increment stream_id counter
+    Stream->>Stream: update recipient index
+    Stream->>Stream: emit StreamCreated(stream_id=42, ...)
+    Stream-->>Factory: stream_id = 42
+    deactivate Stream
+    
+    Factory->>Factory: append_stream_id(42) to registry
+    Factory->>Factory: emit FactoryStreamCreated(stream_id=42, ...)
+    Factory-->>Sender: ✅ Success: stream_id = 42
+    deactivate Factory
+    
+    Factory->>Backend: Event: FactoryStreamCreated
+    Stream->>Backend: Event: StreamCreated
+    Backend->>Backend: Index stream in PostgreSQL
+    Backend->>Backend: Cache accrual snapshot
+    Backend->>Backend: Send email notification to recipient
+```
+
+### Security Checkpoints
+
+| Layer | Mechanism | Enforcement Point |
+|-------|-----------|-------------------|
+| **Authorization** | Soroban `require_auth()` | Every state-mutating function validates caller signature |
+| **Access Control** | Role-based permissions | Sender-only: pause/cancel/rate updates<br/>Recipient-only: withdraw<br/>Admin-only: global pause, admin rotation |
+| **Reentrancy Guards** | CEI pattern | State changes precede external calls (token transfers) |
+| **Integer Overflow** | Checked arithmetic | All accrual calculations use `checked_add/checked_mul` with fallback to `deposit_amount` |
+| **Rate Limiting** | Withdrawal cooldown | 1-ledger minimum interval between successive withdrawals per stream |
+| **Allowlist Enforcement** | Factory pre-check | `create_stream` reverts with `RecipientNotAllowlisted` before touching token |
+| **Timelock** | Governance delay | 48-hour minimum between quorum and execution of proposals |
+| **Event Integrity** | CEI ordering | Events emitted after state persists, providing atomic audit trail |
+
+### Error Handling Patterns
+
+```rust
+// Example: Withdrawal with comprehensive validation
+pub fn withdraw(env: Env, stream_id: u64) -> Result<i128, ContractError> {
+    // 1. Load stream (reverts if not found)
+    let mut stream = storage::load_stream(&env, stream_id)?;
+    
+    // 2. Authorization check
+    stream.recipient.require_auth();
+    
+    // 3. State validation
+    if stream.status == StreamStatus::Completed {
+        return Err(ContractError::StreamTerminalState);
+    }
+    
+    // 4. Accrual calculation (overflow-safe)
+    let accrued = accrual::calculate_accrued_amount(&env, &stream)?;
+    let withdrawable = accrued.saturating_sub(stream.withdrawn_amount);
+    
+    if withdrawable == 0 {
+        return Ok(0); // No-op, no event emitted
+    }
+    
+    // 5. Effects (state mutations)
+    stream.withdrawn_amount += withdrawable;
+    if stream.withdrawn_amount == stream.deposit_amount {
+        stream.status = StreamStatus::Completed;
+        events::emit_stream_completed(&env, stream_id);
+    }
+    storage::save_stream(&env, stream_id, &stream);
+    
+    // 6. Interactions (external calls)
+    token::transfer(&env, &stream.recipient, withdrawable);
+    
+    // 7. Event emission (post-state, post-transfer)
+    events::emit_withdrawal(&env, stream_id, Withdrawal {
+        stream_id,
+        recipient: stream.recipient,
+        amount: withdrawable,
+    });
+    
+    Ok(withdrawable)
+}
+```
+
+---
+
+## 🛠️ Soroban Tech Stack, Development & Compilation
+
+### Technology Stack
+
+| Component | Version | Purpose | Rationale |
+|-----------|---------|---------|-----------|
+| **Rust** | 1.94.1 | Contract language | Pinned via `rust-toolchain.toml` for reproducible builds |
+| **Soroban SDK** | 21.7.7 | Smart contract framework | Locked to tested Stellar network version |
+| **Cargo** | Latest stable | Build system | Standard Rust toolchain |
+| **Stellar CLI** | 21.x | Deployment & testing | Network interaction |
+| **WebAssembly** | `wasm32-unknown-unknown` | Compilation target | Soroban execution environment |
+
+### Development Environment Setup
+
+#### Prerequisites
+
+```bash
+# 1. Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# 2. Clone repository
+git clone https://github.com/wallie-de-sensei/wallie-de-sensei-contracts.git
+cd wallie-de-sensei-contracts
+
+# 3. Install Rust toolchain (version auto-enforced by rust-toolchain.toml)
+rustup toolchain install
+rustup target add wasm32-unknown-unknown
+
+# 4. Verify installation
+rustc --version  # Should show: rustc 1.94.1
+cargo --version
+
+# 5. Install Stellar CLI (optional, for deployment)
+cargo install --locked stellar-cli --features opt
+stellar --version
+```
+
+###  Build Commands
+
+#### Development Build (Fast Iteration)
+
+```bash
+# Build all contracts in workspace
+cargo build --workspace
+
+# Build specific contract
+cargo build -p fluxora_stream
+cargo build -p factory
+cargo build -p governance
+```
+
+#### Release Build (Optimized WASM for Deployment)
+
+```bash
+# Build optimized WASM for all contracts
+cargo build --release --target wasm32-unknown-unknown --workspace
+
+# Build specific contract
+cargo build --release --target wasm32-unknown-unknown -p fluxora_stream
+
+# Output locations:
+# Stream:     target/wasm32-unknown-unknown/release/fluxora_stream.wasm
+# Factory:    target/wasm32-unknown-unknown/release/factory.wasm
+# Governance: target/wasm32-unknown-unknown/release/governance.wasm
+```
+
+#### Optimized Build (Production Deployment)
+
+```bash
+# Install wasm-opt (optional, for size optimization)
+cargo install wasm-opt --locked
+
+# Build and optimize
+cargo build --release --target wasm32-unknown-unknown -p fluxora_stream
+wasm-opt -Oz \
+  target/wasm32-unknown-unknown/release/fluxora_stream.wasm \
+  -o fluxora_stream_optimized.wasm
+
+# Verify size reduction
+ls -lh target/wasm32-unknown-unknown/release/fluxora_stream.wasm
+ls -lh fluxora_stream_optimized.wasm
+```
+
+### 🧪 Testing Pipeline
+
+#### Unit & Integration Tests
+
+```bash
+# Run full test suite (all contracts)
+cargo test --workspace
+
+# Run tests for specific contract
+cargo test -p fluxora_stream
+cargo test -p factory
+cargo test -p governance
+
+# Run with verbose output
+cargo test --workspace -- --nocapture
+
+# Run specific test by name
+cargo test test_create_stream_success
+```
+
+#### Property-Based Tests (Fuzzing)
+
+```bash
+# Run balance conservation property tests (default 256 cases)
+cargo test -p fluxora_stream --features testutils --test balance_conservation
+
+# Deep fuzzing for audit preparation (10,000 cases)
+PROPTEST_CASES=10000 cargo test -p fluxora_stream \
+  --features testutils \
+  --test balance_conservation \
+  -- --nocapture
+
+# Regression test cases stored in:
+# contracts/stream/proptest-regressions/balance_conservation.txt
+```
+
+#### Gas & Budget Analysis
+
+```bash
+# Run gas regression tests
+cargo test -p governance --test gas_regression -- --nocapture
+
+# Profile CPU instruction usage
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source <SECRET_KEY> \
+  --network testnet \
+  -- create_stream \
+  --sender <SENDER> \
+  --recipient <RECIPIENT> \
+  --deposit_amount 1000000 \
+  --rate_per_second 1 \
+  --start_time 0 \
+  --cliff_time 0 \
+  --end_time 1000000 \
+  --with-resource-usage
+```
+
+### 📝 Code Quality Checks
+
+```bash
+# Format code (auto-fix)
+cargo fmt --all
+
+# Lint code (clippy)
+cargo clippy --all-targets --all-features -- -D warnings
+
+# Check for compilation errors without building
+cargo check --workspace
+
+# Run all checks in CI pipeline
+cargo fmt --all --check && \
+cargo clippy --all-targets --all-features -- -D warnings && \
+cargo test --workspace
+```
+
+### 🚀 Deployment Commands
+
+#### Testnet Deployment (Step-by-Step)
+
+```bash
+# 1. Configure network
+stellar network add \
+  --global testnet \
+  --rpc-url https://soroban-testnet.stellar.org:443 \
+  --network-passphrase "Test SDF Network ; September 2015"
+
+# 2. Fund deployer account (get testnet XLM)
+stellar keys generate deployer --network testnet
+stellar keys address deployer
+# Visit: https://laboratory.stellar.org/#account-creator?network=test
+
+# 3. Deploy stream contract
+stellar contract deploy \
+  --wasm target/wasm32-unknown-unknown/release/fluxora_stream.wasm \
+  --source deployer \
+  --network testnet \
+  > stream_contract_id.txt
+
+STREAM_CONTRACT=$(cat stream_contract_id.txt)
+echo "Stream Contract ID: $STREAM_CONTRACT"
+
+# 4. Initialize stream contract
+stellar contract invoke \
+  --id $STREAM_CONTRACT \
+  --source deployer \
+  --network testnet \
+  -- init \
+  --token <USDC_TOKEN_ADDRESS> \
+  --admin <ADMIN_ADDRESS>
+
+# 5. Deploy factory contract
+stellar contract deploy \
+  --wasm target/wasm32-unknown-unknown/release/factory.wasm \
+  --source deployer \
+  --network testnet \
+  > factory_contract_id.txt
+
+FACTORY_CONTRACT=$(cat factory_contract_id.txt)
+
+# 6. Initialize factory
+stellar contract invoke \
+  --id $FACTORY_CONTRACT \
+  --source deployer \
+  --network testnet \
+  -- init \
+  --admin <ADMIN_ADDRESS> \
+  --stream_contract $STREAM_CONTRACT \
+  --max_deposit 1000000000000 \
+  --min_duration 86400
+
+# 7. Verify deployment
+stellar contract invoke \
+  --id $STREAM_CONTRACT \
+  --network testnet \
+  -- version
+
+stellar contract invoke \
+  --id $FACTORY_CONTRACT \
+  --network testnet \
+  -- get_factory_config
+```
+
+#### Mainnet Deployment Checklist
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for comprehensive production deployment guide including:
+- Pre-deployment security checklist
+- Multi-signature admin setup
+- Governance contract initialization
+- Post-deployment verification steps
+- Upgrade strategy
+
+---
+
+## 🔒 Security, Auditing & Guardrails
+
+### Security Architecture
+
+#### 1. Access Control Matrix
+
+| Role | Permissions | Authorization Mechanism |
+|------|------------|-------------------------|
+| **Stream Sender** | • Create streams<br/>• Pause/resume streams<br/>• Cancel streams<br/>• Update rates<br/>• Shorten/extend end times | `sender.require_auth()` on stream mutations |
+| **Stream Recipient** | • Withdraw accrued tokens<br/>• Update recipient address<br/>• Set auto-claim destination | `recipient.require_auth()` on withdrawals |
+| **Contract Admin** | • Set global pause<br/>• Admin-cancel any stream<br/>• Update rate caps<br/>• Rotate admin address | `admin.require_auth()` on admin-only functions |
+| **Factory Admin** | • Update allowlist<br/>• Set deposit caps<br/>• Configure rate bounds<br/>• Pause factory creation | `factory_admin.require_auth()` on policy setters |
+| **Governance Co-Signers** | • Propose parameter changes<br/>• Approve proposals<br/>• Execute post-timelock | Multi-signature threshold (default: 3/5) |
+
+#### 2. Reentrancy Protection (CEI Pattern)
+
+All state-mutating functions follow **Checks-Effects-Interactions**:
+
+```rust
+// Example: withdraw() implementation
+pub fn withdraw(env: Env, stream_id: u64) -> Result<i128, ContractError> {
+    // ✅ CHECKS: Load state, validate conditions
+    let mut stream = load_stream(&env, stream_id)?;
+    stream.recipient.require_auth();
+    if stream.status == StreamStatus::Completed {
+        return Err(ContractError::StreamTerminalState);
+    }
+    
+    let accrued = calculate_accrued(&env, &stream)?;
+    let withdrawable = accrued - stream.withdrawn_amount;
+    
+    // ✅ EFFECTS: Mutate state BEFORE external calls
+    stream.withdrawn_amount += withdrawable;
+    if stream.withdrawn_amount == stream.deposit_amount {
+        stream.status = StreamStatus::Completed;
+    }
+    save_stream(&env, stream_id, &stream); // Persist state
+    
+    // ✅ INTERACTIONS: External calls last
+    token::transfer(&env, &stream.recipient, withdrawable);
+    
+    // ✅ EVENTS: Emit after successful interaction
+    emit_withdrawal(&env, stream_id, withdrawable);
+    
+    Ok(withdrawable)
+}
+```
+
+#### 3. Integer Overflow Prevention
+
+```rust
+// Safe accrual calculation with overflow protection
+pub fn calculate_accrued_amount(env: &Env, stream: &Stream) -> Result<i128, ContractError> {
+    let now = env.ledger().timestamp();
+    
+    // Check cliff
+    if now < stream.cliff_time {
+        return Ok(0);
+    }
+    
+    let effective_end = now.min(stream.end_time);
+    let elapsed = effective_end.saturating_sub(stream.start_time);
+    
+    // Overflow-safe multiplication with fallback
+    let accrued = elapsed
+        .checked_mul(stream.rate_per_second as u64)
+        .and_then(|v| i128::try_from(v).ok())
+        .unwrap_or(stream.deposit_amount); // Fallback to deposit cap
+    
+    Ok(accrued.min(stream.deposit_amount))
+}
+```
+
+#### 4. Governance Timelock Enforcement
+
+```rust
+// Proposal execution requires 48-hour timelock after quorum
+pub fn execute(env: Env, proposal_id: u32) -> Result<(), GovernanceError> {
+    let proposal = load_proposal(&env, proposal_id)?;
+    
+    // Check quorum reached
+    let quorum_info = env.storage().persistent()
+        .get(&DataKey::QuorumReachedAt(proposal_id))
+        .ok_or(GovernanceError::QuorumNotReached)?;
+    
+    // Enforce timelock
+    let now = env.ledger().timestamp();
+    let executable_after = quorum_info.reached_at
+        .checked_add(GOVERNANCE_TIMELOCK_SECONDS) // 48 hours
+        .ok_or(GovernanceError::ArithmeticOverflow)?;
+    
+    if now < executable_after {
+        return Err(GovernanceError::TimelockNotElapsed);
+    }
+    
+    // Mark executed (prevents replay)
+    proposal.executed = true;
+    save_proposal(&env, proposal_id, &proposal);
+    
+    // Dispatch call to target contract
+    dispatch_call(&env, &proposal.target, &proposal.calldata)?;
+    
+    Ok(())
+}
+```
+
+#### 5. Token Trust Model
+
+**Assumptions:**
+- Token contract implements Stellar Asset Contract (SAC) interface
+- Token contract is non-malicious (does not reenter or lie about balances)
+- Token address is validated at `init()` time via smoke test
+
+**Validation:**
+```rust
+// Token contract verification during init
+fn validate_token_behavior(env: &Env, token: &Address) -> Result<(), ContractError> {
+    let client = token::Client::new(env, token);
+    
+    // Smoke test: call balance() to verify interface compliance
+    match client.try_balance(&env.current_contract_address()) {
+        Ok(_) => Ok(()),
+        Err(_) => Err(ContractError::TokenVerificationFailed),
+    }
+}
+```
+
+### Audit Trail & Compliance
+
+#### Event Emission for Immutable Audit Log
+
+Every state change emits a structured event:
+
+| Event | Fields | Use Case |
+|-------|--------|----------|
+| `StreamCreated` | stream_id, sender, recipient, deposit, rate, start, cliff, end, metadata | Compliance reporting, invoice matching |
+| `Withdrawal` | stream_id, recipient, amount | Payment reconciliation, tax reporting |
+| `StreamCancelled` | stream_id, cancelled_at | Early termination audit, refund tracking |
+| `RateUpdated` | stream_id, old_rate, new_rate, effective_time | Compensation adjustment history |
+| `ProposalExecuted` | proposal_id, target, calldata | Governance action provenance |
+
+#### Reproducible Builds
+
+```bash
+# Generate WASM checksum for audit verification
+sha256sum target/wasm32-unknown-unknown/release/fluxora_stream.wasm \
+  > wasm/checksums.sha256
+
+# Verify deployed contract matches audited build
+stellar contract fetch \
+  --id <DEPLOYED_CONTRACT_ID> \
+  --network mainnet \
+  --out fetched_contract.wasm
+
+sha256sum -c wasm/checksums.sha256
+```
+
+### Known Limitations & Residual Risks
+
+| Risk | Mitigation | Residual Exposure |
+|------|-----------|-------------------|
+| **Token contract rug pull** | Admin can globally pause, but cannot recover locked funds | High (external dependency) |
+| **Ledger timestamp manipulation** | Stellar validators are byzantine-fault-tolerant | Low (Stellar network assumption) |
+| **Storage expiry (TTL)** | Automated TTL bumping on every read/write | Low (requires sustained inactivity >30 days) |
+| **Governance key compromise** | Multi-signature + 48h timelock | Medium (social coordination needed to respond) |
+
+### Security Resources
+
+- **[CEI Analysis](contracts/stream/CEI_ANALYSIS.md)**: Line-by-line CEI pattern verification
+- **[Security Policy](SECURITY.md)**: Vulnerability disclosure process
+- **[Audit Preparation](docs/audit.md)**: Entry points and invariants for auditors
+- **[Error Codes](docs/error.md)**: Complete error reference with discriminants
+- **[Formal Verification](docs/formal-verification.md)**: Property-based testing approach
+
+---
+
+## 📚 Documentation
+
+### Contract-Specific Documentation
+
+- **[Stream Contract](docs/streaming.md)** — Lifecycle, accrual formula, cliff/end_time, access control, events, and error codes
+- **[Factory Contract](docs/factory.md)** — Policy enforcement, allowlists, rate bounds, batch operations
+- **[Governance Contract](docs/governance.md)** — Multi-signature proposals, timelock, parameter changes
 - **[Dust threshold](docs/dust-threshold.md)** — `withdraw_dust_threshold` formula, USDC examples, validation table, and template guidance.
 - **[Security](docs/security.md)** — CEI ordering, token trust model, authorization paths, overflow protection.
 - **[Upgrade strategy](docs/upgrade.md)** — CONTRACT_VERSION policy, breaking-change classification, migration runbook.
@@ -330,8 +1037,87 @@ All three workspace contract modules are structured to build simultaneously unde
 
 ```bash
 cargo build --target wasm32-unknown-unknown --workspace
-## Contributing
+## 🤝 Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on the development workflow, branch naming, and testing requirements (including the 95% test coverage standard).
+This repository is an active participant in the **Stellar Wave Program**. We welcome contributions from developers of all skill levels!
+
+### Wave Program
+
+The Wave Program is our structured contribution system where maintainers create scoped issues for contributors to pick up during sprint cycles.
+
+**Available Work Types:**
+- 🐛 **Bug Fixes**: Security vulnerabilities, edge cases, logic errors
+- ✨ **New Features**: Stream extensions, governance mechanisms, optimization tools
+- 📚 **Documentation**: Technical guides, architecture docs, tutorials
+- 🧪 **Testing**: Property-based tests, integration tests, fuzzing
+- 🔧 **Code Quality**: Refactoring, gas optimization, dependency updates
+
+See [plan.md](plan.md) for detailed sprint structure and [CONTRIBUTING.md](CONTRIBUTING.md) for contributor guidelines.
+
+### Quick Start for Contributors
+
+```bash
+# 1. Fork and clone
+git clone https://github.com/YOUR_USERNAME/wallie-de-sensei-contracts.git
+cd wallie-de-sensei-contracts
+
+# 2. Create feature branch
+git checkout -b feat/issue-number-description
+
+# 3. Make changes and test
+cargo test --workspace
+cargo fmt --all
+cargo clippy --all-targets --all-features -- -D warnings
+
+# 4. Submit PR
+git push origin feat/issue-number-description
+```
+
+### Testing Standards
+
+- **Unit tests**: 95%+ coverage required for new code
+- **Integration tests**: End-to-end workflows with `soroban_sdk::testutils`
+- **Property-based tests**: Randomized fuzzing with `proptest` crate
+- **Snapshot tests**: Event emission verification
+
+### Code Review Process
+
+1. Automated CI checks (format, lint, test, build)
+2. Maintainer code review
+3. Security review for sensitive changes
+4. Approval and merge
 
 See [CHANGELOG.md](./CHANGELOG.md) for a full history of changes between contract versions.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 🔗 Related Repositories
+
+- **[wallie-de-sensei-backend](https://github.com/wallie-de-sensei/wallie-de-sensei-backend)** — Event indexer and API server
+- **wallie-de-sensei-frontend** — Dashboard and recipient UI (coming soon)
+
+---
+
+## 📞 Support & Community
+
+- **Documentation**: [docs/README.md](docs/README.md)
+- **Issues**: [GitHub Issues](https://github.com/wallie-de-sensei/wallie-de-sensei-contracts/issues)
+- **Security**: See [SECURITY.md](SECURITY.md) for vulnerability reporting
+- **Wave Program**: See [plan.md](plan.md) for contribution opportunities
+
+---
+
+<div align="center">
+
+**Built with ❤️ on Stellar Soroban**
+
+[![Stellar](https://img.shields.io/badge/Stellar-black?style=flat&logo=stellar)](https://stellar.org)
+[![Soroban](https://img.shields.io/badge/Soroban-Smart%20Contracts-7D00FF)](https://soroban.stellar.org)
+
+</div>
