@@ -1,3 +1,12 @@
 [workspace]
 members = ["contracts/stream", "contracts/factory", "contracts/governance"]
 resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Wallie de Sensei Team"]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/wallie-de-sensei/wallie-de-sensei-contracts"
+homepage = "https://github.com/wallie-de-sensei/wallie-de-sensei-contracts"
+documentation = "https://github.com/wallie-de-sensei/wallie-de-sensei-contracts/tree/main/docs"
