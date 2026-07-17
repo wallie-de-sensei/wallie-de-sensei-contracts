@@ -20,6 +20,6 @@
 
 6. **Update `cancel_stream_internal`** to compute fee and apply to refund only
 
-7. **Run `cargo test -p fluxora_stream`** and fix any issues
+7. **Run `cargo test -p wallie_de_sensei_stream`** and fix any issues
 
 8. **Update documentation** if gaps found
