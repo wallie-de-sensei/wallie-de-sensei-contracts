@@ -38,7 +38,7 @@
 
 extern crate std;
 
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     ContractError, FluxoraStream, FluxoraStreamClient, PauseReason, StreamKind, StreamStatus,
 };
 use proptest::prelude::*;

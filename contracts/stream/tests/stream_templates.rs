@@ -51,7 +51,7 @@ fn template_register_create_delete_happy_path() {
         &0,
         &None,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
     let stream_id = client
         .create_stream_from_template(&sender, &tid, &recipient, &3600_i128, &1_i128, &0, &None, &None, &StreamKind::Linear);

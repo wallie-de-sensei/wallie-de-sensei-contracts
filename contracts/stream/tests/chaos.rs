@@ -10,7 +10,7 @@
 //! Each permutation is applied to an independent test context to ensure isolation.
 //! On failure the permutation seed is printed for reproducibility.
 
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     ContractError, CreateStreamParams, FluxoraStream, FluxoraStreamClient, PauseReason,
     StreamStatus,
 };

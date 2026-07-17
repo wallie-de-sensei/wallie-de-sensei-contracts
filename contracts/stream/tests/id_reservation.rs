@@ -5,7 +5,7 @@
 
 extern crate std;
 
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     ContractError, FluxoraStream, FluxoraStreamClient, StreamKind, MAX_ID_RESERVATION,
 };
 use soroban_sdk::{

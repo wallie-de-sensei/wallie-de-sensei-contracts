@@ -1,4 +1,4 @@
-use fluxora_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
 use soroban_sdk::{token::Client as TokenClient, Address, Env};
 
 struct TestContext<'a> {

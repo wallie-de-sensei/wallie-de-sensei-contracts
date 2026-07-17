@@ -3,7 +3,7 @@
 //! Verifies that `compute_adaptive_ttl` scales correctly with remaining stream
 //! lifetime and that the floor/cap invariants hold.
 
-use fluxora_stream::{CreateStreamParams, FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{CreateStreamParams, FluxoraStream, FluxoraStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token::Client as TokenClient,
@@ -54,7 +54,7 @@ impl<'a> Ctx<'a> {
             &soroban_sdk::vec![
                 &self.env,
                 CreateStreamParams {
-                    kind: fluxora_stream::StreamKind::Linear,
+                    kind: wallie_de_sensei_stream::StreamKind::Linear,
                     recipient: recipient.clone(),
                     deposit_amount: duration as i128,
                     rate_per_second: 1,

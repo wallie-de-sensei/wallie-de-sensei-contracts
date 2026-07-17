@@ -9,8 +9,8 @@
 //! - The `InvalidStreamContract` discriminant is stable and existing
 //!   discriminants are unchanged.
 
-use fluxora_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
-use fluxora_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
+use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, MockAuth, MockAuthInvoke},
     Address, Env, IntoVal,

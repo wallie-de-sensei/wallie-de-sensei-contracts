@@ -2,7 +2,7 @@
 
 extern crate std;
 
-use fluxora_stream::{FluxoraStream, FluxoraStreamClient, StreamStatus};
+use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient, StreamStatus};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token::{Client as TokenClient, StellarAssetClient},
@@ -71,7 +71,7 @@ fn test_withdraw_dust_threshold_enforced() {
         &1000u64,
         &100_i128, // threshold = 100
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // At t=50, withdrawable is 50. Threshold is 100.
@@ -103,7 +103,7 @@ fn test_withdraw_dust_threshold_ignored_on_final_drain() {
         &1000u64,
         &500_i128, // threshold = 500
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // Withdraw 950 first (above threshold)
@@ -141,7 +141,7 @@ fn test_withdraw_dust_threshold_ignored_in_terminal_state() {
         &1000u64,
         &500_i128, // threshold = 500
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // Cancel stream at t=100.
@@ -174,7 +174,7 @@ fn test_withdraw_dust_threshold_ignored_past_end_time() {
         &1000u64,
         &500_i128,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // Withdraw 900 at t=900 (above threshold)
@@ -206,11 +206,11 @@ fn test_create_stream_rejects_excessive_dust_threshold() {
         &1000u64,
         &1100_i128, // threshold > deposit
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     match res {
-        Err(Ok(fluxora_stream::ContractError::InvalidDustThreshold)) => {}
+        Err(Ok(wallie_de_sensei_stream::ContractError::InvalidDustThreshold)) => {}
         _ => panic!("Expected InvalidDustThreshold error, got {:?}", res),
     }
 }
@@ -235,7 +235,7 @@ fn test_zero_threshold_allows_all_withdrawals() {
         &1000u64,
         &0_i128, // no filter
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // At t=1, only 1 raw unit has accrued — still allowed with threshold=0.
@@ -263,7 +263,7 @@ fn test_threshold_equal_to_deposit_blocks_until_terminal() {
         &1000u64,
         &deposit, // threshold == deposit
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // Mid-stream: withdrawable < deposit → blocked.
@@ -301,7 +301,7 @@ fn test_batch_withdraw_respects_dust_threshold() {
         &1000u64,
         &200_i128,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // Stream B: threshold = 0 (always allowed)
@@ -315,7 +315,7 @@ fn test_batch_withdraw_respects_dust_threshold() {
         &1000u64,
         &0_i128,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     ctx.env.ledger().set_timestamp(100);
@@ -348,7 +348,7 @@ fn test_threshold_exactly_at_withdrawable_is_allowed() {
         &1000u64,
         &100_i128,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     ctx.env.ledger().set_timestamp(100);
@@ -377,7 +377,7 @@ fn test_short_stream_threshold_blocks_until_end_time() {
         &10u64,
         &600_i128, // requires 6 s of accrual before first withdrawal
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // At t=5: 500 accrued < 600 threshold → blocked
@@ -453,7 +453,7 @@ fn test_withdraw_dust_threshold_enforced() {
         &1000u64,
         &100_i128, // threshold = 100
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // At t=50, withdrawable is 50. Threshold is 100.
@@ -485,7 +485,7 @@ fn test_withdraw_dust_threshold_ignored_on_final_drain() {
         &1000u64,
         &500_i128, // threshold = 500
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // Withdraw 950 first (above threshold)
@@ -523,7 +523,7 @@ fn test_withdraw_dust_threshold_ignored_in_terminal_state() {
         &1000u64,
         &500_i128, // threshold = 500
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // Cancel stream at t=100.
@@ -556,7 +556,7 @@ fn test_withdraw_dust_threshold_ignored_past_end_time() {
         &1000u64,
         &500_i128,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // Withdraw 900 at t=900 (above threshold)
@@ -588,11 +588,11 @@ fn test_create_stream_rejects_excessive_dust_threshold() {
         &1000u64,
         &1100_i128, // threshold > deposit
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     match res {
-        Err(Ok(fluxora_stream::ContractError::InvalidDustThreshold)) => {}
+        Err(Ok(wallie_de_sensei_stream::ContractError::InvalidDustThreshold)) => {}
         _ => panic!("Expected InvalidDustThreshold error, got {:?}", res),
     }
 }

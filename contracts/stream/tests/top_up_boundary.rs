@@ -1,6 +1,6 @@
 extern crate std;
 
-use fluxora_stream::{ContractError, FluxoraStream, FluxoraStreamClient, PauseReason, StreamKind, StreamStatus};
+use wallie_de_sensei_stream::{ContractError, FluxoraStream, FluxoraStreamClient, PauseReason, StreamKind, StreamStatus};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token::{Client as TokenClient, StellarAssetClient},

@@ -1,6 +1,6 @@
 extern crate std;
 
-use fluxora_stream::{ContractError, FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{ContractError, FluxoraStream, FluxoraStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token::{Client as TokenClient, StellarAssetClient},
@@ -63,7 +63,7 @@ impl<'a> TestContext<'a> {
             &1000u64,
             &0_i128,
             &None,
-            &fluxora_stream::StreamKind::Linear,
+            &wallie_de_sensei_stream::StreamKind::Linear,
         )
     }
 }

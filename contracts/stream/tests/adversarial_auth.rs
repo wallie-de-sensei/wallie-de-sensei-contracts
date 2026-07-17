@@ -1,7 +1,7 @@
 extern crate std;
 
 use ed25519_dalek::{Signer, SigningKey};
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     ContractError, FluxoraStream, FluxoraStreamClient, PauseReason, StreamStatus,
 };
 use soroban_sdk::{
@@ -125,7 +125,7 @@ impl<'a> Ctx<'a> {
             &1000u64,
             &0,
             &None,
-            &fluxora_stream::StreamKind::Linear,
+            &wallie_de_sensei_stream::StreamKind::Linear,
         )
     }
 
@@ -1177,7 +1177,7 @@ mod delegated_withdraw_adversarial {
     extern crate std;
 
     use ed25519_dalek::{Signer, SigningKey};
-    use fluxora_stream::{ContractError, FluxoraStream, FluxoraStreamClient, PauseReason};
+    use wallie_de_sensei_stream::{ContractError, FluxoraStream, FluxoraStreamClient, PauseReason};
     use soroban_sdk::{
         testutils::{Address as _, Ledger, MockAuth, MockAuthInvoke},
         token::{Client as TokenClient, StellarAssetClient},
@@ -1282,7 +1282,7 @@ mod delegated_withdraw_adversarial {
                 &1000u64,
                 &0,
                 &None,
-                &fluxora_stream::StreamKind::Linear,
+                &wallie_de_sensei_stream::StreamKind::Linear,
             )
         }
 
@@ -1502,7 +1502,7 @@ impl<'a> DelegatedCtx<'a> {
         env.mock_all_auths();
         env.ledger().set_timestamp(0);
 
-        let contract_id = env.register_contract(None, fluxora_stream::FluxoraStream);
+        let contract_id = env.register_contract(None, wallie_de_sensei_stream::FluxoraStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin)
@@ -1540,7 +1540,7 @@ impl<'a> DelegatedCtx<'a> {
             &1000u64,
             &0,
             &None,
-            &fluxora_stream::StreamKind::Linear,
+            &wallie_de_sensei_stream::StreamKind::Linear,
         );
 
         DelegatedCtx {
@@ -1601,7 +1601,7 @@ fn delegated_withdraw_expired_deadline_rejected() {
     );
     assert_eq!(
         result,
-        Err(Ok(fluxora_stream::ContractError::SignatureDeadlineExpired)),
+        Err(Ok(wallie_de_sensei_stream::ContractError::SignatureDeadlineExpired)),
         "expired deadline must return SignatureDeadlineExpired"
     );
 }
@@ -1624,7 +1624,7 @@ fn delegated_withdraw_wrong_nonce_rejected() {
     );
     assert_eq!(
         result,
-        Err(Ok(fluxora_stream::ContractError::InvalidSignature)),
+        Err(Ok(wallie_de_sensei_stream::ContractError::InvalidSignature)),
         "wrong nonce must return InvalidSignature"
     );
 }
@@ -1654,7 +1654,7 @@ fn delegated_withdraw_wrong_public_key_rejected() {
     );
     assert_eq!(
         result,
-        Err(Ok(fluxora_stream::ContractError::InvalidSignature)),
+        Err(Ok(wallie_de_sensei_stream::ContractError::InvalidSignature)),
         "public key not matching stream recipient must be rejected before host sig check"
     );
 }
@@ -1690,7 +1690,7 @@ fn delegated_withdraw_replay_rejected() {
     );
     assert_eq!(
         replay,
-        Err(Ok(fluxora_stream::ContractError::InvalidSignature)),
+        Err(Ok(wallie_de_sensei_stream::ContractError::InvalidSignature)),
         "replayed nonce must be rejected"
     );
 }
@@ -1743,7 +1743,7 @@ fn delegated_withdraw_below_minimum_rejected() {
     );
     assert_eq!(
         result,
-        Err(Ok(fluxora_stream::ContractError::BelowMinimumAmount)),
+        Err(Ok(wallie_de_sensei_stream::ContractError::BelowMinimumAmount)),
         "withdrawable below minimum must return BelowMinimumAmount"
     );
     // Nonce must NOT be consumed on a failed withdrawal.

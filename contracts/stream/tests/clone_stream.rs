@@ -14,7 +14,7 @@
 //! - Multiple sequential clones (recurring payroll pattern)
 extern crate std;
 
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     ContractError, FluxoraStream, FluxoraStreamClient, PauseReason, StreamCloned, StreamCreated,
     StreamKind, StreamStatus,
 };

@@ -10,7 +10,7 @@
 
 extern crate std;
 
-use fluxora_stream::{FluxoraStream, FluxoraStreamClient, StreamKind, MAX_PAGE_SIZE};
+use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient, StreamKind, MAX_PAGE_SIZE};
 use soroban_sdk::{
     testutils::Address as _,
     token::{Client as TokenClient, StellarAssetClient},

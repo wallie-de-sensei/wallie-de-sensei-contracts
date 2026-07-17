@@ -1,4 +1,4 @@
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     ContractError, DataKey, FluxoraStream, FluxoraStreamClient, PauseReason, StreamKind,
     StreamStatus,
 };

@@ -2,7 +2,7 @@
 
 extern crate std;
 
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     ContractError, CreateStreamParams, FluxoraStream, FluxoraStreamClient, PauseReason,
     StreamHealth, StreamStatus,
 };
@@ -468,7 +468,7 @@ fn get_stream_health_returns_correct_summary_underfunded() {
         &1000u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     ctx.env.ledger().set_timestamp(300);
@@ -580,7 +580,7 @@ fn snapshot_event_rate_end_topup_recp() {
         &1000u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // 1. rate_upd
@@ -659,7 +659,7 @@ fn update_rate_accepts_maximum_i128_rate() {
         &1u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     ctx.client().update_rate_per_second(&stream_id, &i128::MAX);
@@ -718,7 +718,7 @@ proptest::proptest! {
             &duration,
             &0,
             &None,
-            &fluxora_stream::StreamKind::Linear,
+            &wallie_de_sensei_stream::StreamKind::Linear,
             );
 
         for &next_rate in rates.iter().skip(1) {
@@ -771,7 +771,7 @@ fn snapshot_no_event_on_revert() {
         &1000u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
     assert!(result.is_err());
     assert_eq!(ctx.env.events().all().len(), events_before);
@@ -822,7 +822,7 @@ fn test_accrual_none_checkpoint_returns_zero() {
         &1100u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // At start_time the elapsed seconds are 0 → accrued must be 0.
@@ -854,7 +854,7 @@ fn test_accrual_none_checkpoint_before_cliff_returns_zero() {
         &1000u64,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
 
     // Before cliff → 0, regardless of checkpoint state.
@@ -1221,7 +1221,7 @@ fn test_set_auto_claim_valid_destination() {
     // Verify status shows valid destination
     let status = ctx.client().get_auto_claim_status(&stream_id);
     match status {
-        fluxora_stream::AutoClaimStatus::ValidDestination(dest, claimable) => {
+        wallie_de_sensei_stream::AutoClaimStatus::ValidDestination(dest, claimable) => {
             assert_eq!(dest, destination);
             assert_eq!(claimable, 0); // No time has passed
         }
@@ -1309,7 +1309,7 @@ fn test_revoke_auto_claim() {
 
     // Verify status shows NotSet
     let status = ctx.client().get_auto_claim_status(&stream_id);
-    assert_eq!(status, fluxora_stream::AutoClaimStatus::NotSet);
+    assert_eq!(status, wallie_de_sensei_stream::AutoClaimStatus::NotSet);
 
     // Verify event was emitted
     let events = ctx.env.events().all();
@@ -1340,7 +1340,7 @@ fn test_get_auto_claim_status_not_set() {
     let stream_id = ctx.create_default_stream();
 
     let status = ctx.client().get_auto_claim_status(&stream_id);
-    assert_eq!(status, fluxora_stream::AutoClaimStatus::NotSet);
+    assert_eq!(status, wallie_de_sensei_stream::AutoClaimStatus::NotSet);
 }
 
 /// Test get_auto_claim_status calculates claimable amount correctly
@@ -1358,7 +1358,7 @@ fn test_get_auto_claim_status_claimable_amount() {
 
     let status = ctx.client().get_auto_claim_status(&stream_id);
     match status {
-        fluxora_stream::AutoClaimStatus::ValidDestination(dest, claimable) => {
+        wallie_de_sensei_stream::AutoClaimStatus::ValidDestination(dest, claimable) => {
             assert_eq!(dest, destination);
             assert_eq!(claimable, 500);
         }
@@ -1385,7 +1385,7 @@ fn test_get_auto_claim_status_after_withdrawal() {
 
     let status = ctx.client().get_auto_claim_status(&stream_id);
     match status {
-        fluxora_stream::AutoClaimStatus::ValidDestination(_, claimable) => {
+        wallie_de_sensei_stream::AutoClaimStatus::ValidDestination(_, claimable) => {
             assert_eq!(claimable, 300); // 800 accrued - 500 withdrawn = 300
         }
         _ => panic!("Expected ValidDestination status"),
@@ -1577,7 +1577,7 @@ fn test_trigger_auto_claim_paused_stream_fails() {
     // Pause the stream
     ctx.env.ledger().set_timestamp(500);
     ctx.client()
-        .pause_stream(&stream_id, &fluxora_stream::PauseReason::Operational);
+        .pause_stream(&stream_id, &wallie_de_sensei_stream::PauseReason::Operational);
 
     // Try to trigger at end_time while paused
     // Note: Paused streams don't accrue, so this tests the terminal state check

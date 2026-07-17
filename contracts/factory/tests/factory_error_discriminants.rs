@@ -22,7 +22,7 @@
 
 #![cfg(test)]
 
-use fluxora_factory::FactoryError;
+use wallie_de_sensei_factory::FactoryError;
 
 /// Compile-time + cheap runtime stability check.
 ///

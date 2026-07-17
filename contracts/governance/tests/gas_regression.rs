@@ -1,4 +1,4 @@
-use fluxora_governance::{FluxoraGovernance, FluxoraGovernanceClient};
+use wallie_de_sensei_governance::{FluxoraGovernance, FluxoraGovernanceClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     Address, Bytes, Env, Vec,
@@ -6,7 +6,7 @@ use soroban_sdk::{
 // contracts/governance/tests/gas_regression.rs
 #![cfg(test)]
 
-use fluxora_governance::{FluxoraGovernance, FluxoraGovernanceClient, GovernanceError};
+use wallie_de_sensei_governance::{FluxoraGovernance, FluxoraGovernanceClient, GovernanceError};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     vec, Address, Bytes, Env, Vec,

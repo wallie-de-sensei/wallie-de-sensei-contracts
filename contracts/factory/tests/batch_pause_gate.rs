@@ -2,8 +2,8 @@
 
 extern crate std;
 
-use fluxora_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
-use fluxora_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
+use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token::{Client as TokenClient, StellarAssetClient},
@@ -78,7 +78,7 @@ fn test_create_streams_batch_paused_enforcement() {
     assert!(ctx.factory.is_factory_paused());
 
     let mut streams = soroban_sdk::Vec::new(&ctx.env);
-    streams.push_back(fluxora_stream::CreateStreamParams {
+    streams.push_back(wallie_de_sensei_stream::CreateStreamParams {
         recipient: ctx.recipient.clone(),
         deposit_amount: DEPOSIT_AMOUNT,
         rate_per_second: RATE_PER_SECOND,
@@ -87,7 +87,7 @@ fn test_create_streams_batch_paused_enforcement() {
         end_time: now + STREAM_DURATION,
         withdraw_dust_threshold: Some(0),
         memo: None,
-        kind: fluxora_stream::StreamKind::Linear,
+        kind: wallie_de_sensei_stream::StreamKind::Linear,
     });
 
     let result_non_empty = ctx.factory.try_create_streams(&ctx.sender, &streams);
@@ -119,7 +119,7 @@ fn test_create_streams_succeeds_when_factory_not_paused() {
     assert!(!ctx.factory.is_factory_paused());
 
     let mut streams = soroban_sdk::Vec::new(&ctx.env);
-    streams.push_back(fluxora_stream::CreateStreamParams {
+    streams.push_back(wallie_de_sensei_stream::CreateStreamParams {
         recipient: ctx.recipient.clone(),
         deposit_amount: DEPOSIT_AMOUNT,
         rate_per_second: RATE_PER_SECOND,
@@ -128,7 +128,7 @@ fn test_create_streams_succeeds_when_factory_not_paused() {
         end_time: now + STREAM_DURATION,
         withdraw_dust_threshold: Some(0),
         memo: None,
-        kind: fluxora_stream::StreamKind::Linear,
+        kind: wallie_de_sensei_stream::StreamKind::Linear,
     });
 
     // Prove the pause gate is not blocking: an allowlist violation means policy

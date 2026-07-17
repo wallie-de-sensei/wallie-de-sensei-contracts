@@ -1,6 +1,6 @@
 extern crate std;
 
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     AutoClaimStatus, ContractError, FluxoraStream, FluxoraStreamClient, StreamKind,
 };
 use soroban_sdk::{

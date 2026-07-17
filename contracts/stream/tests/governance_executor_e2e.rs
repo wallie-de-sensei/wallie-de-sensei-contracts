@@ -22,10 +22,10 @@
 
 extern crate std;
 
-use fluxora_governance::{
+use wallie_de_sensei_governance::{
     CallData, FluxoraGovernance, FluxoraGovernanceClient, GovernanceError, ProposalExecuted,
 };
-use fluxora_stream::{DataKey, FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{DataKey, FluxoraStream, FluxoraStreamClient};
 use soroban_sdk::{
     symbol_short,
     testutils::{Address as _, Events, Ledger},

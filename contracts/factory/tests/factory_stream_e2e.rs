@@ -24,8 +24,8 @@
 
 extern crate std;
 
-use fluxora_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
-use fluxora_stream::{CreateStreamParams, FluxoraStream, FluxoraStreamClient, StreamKind};
+use wallie_de_sensei_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
+use wallie_de_sensei_stream::{CreateStreamParams, FluxoraStream, FluxoraStreamClient, StreamKind};
 use soroban_sdk::{
     testutils::{Address as _, Ledger, Events},
     token::{Client as TokenClient, StellarAssetClient},
@@ -94,7 +94,7 @@ impl<'a> FactoryClientWrapper<'a> {
             end_time,
             withdraw_dust_threshold,
             &None,
-            &fluxora_stream::StreamKind::Linear,
+            &wallie_de_sensei_stream::StreamKind::Linear,
         )
     }
 
@@ -119,7 +119,7 @@ impl<'a> FactoryClientWrapper<'a> {
             end_time,
             withdraw_dust_threshold,
             &None,
-            &fluxora_stream::StreamKind::Linear,
+            &wallie_de_sensei_stream::StreamKind::Linear,
         )
     }
 
@@ -134,7 +134,7 @@ impl<'a> FactoryClientWrapper<'a> {
     fn create_streams(
         &self,
         sender: &Address,
-        streams: &soroban_sdk::Vec<fluxora_stream::CreateStreamParams>,
+        streams: &soroban_sdk::Vec<wallie_de_sensei_stream::CreateStreamParams>,
     ) -> soroban_sdk::Vec<u64> {
         self.client.create_streams(sender, streams)
     }
@@ -142,7 +142,7 @@ impl<'a> FactoryClientWrapper<'a> {
     fn try_create_streams(
         &self,
         sender: &Address,
-        streams: &soroban_sdk::Vec<fluxora_stream::CreateStreamParams>,
+        streams: &soroban_sdk::Vec<wallie_de_sensei_stream::CreateStreamParams>,
     ) -> Result<Result<soroban_sdk::Vec<u64>, soroban_sdk::ConversionError>, Result<FactoryError, soroban_sdk::InvokeError>> {
         self.client.try_create_streams(sender, streams)
     }
@@ -239,7 +239,7 @@ impl<'a> Ctx<'a> {
 
     fn create_default_stream(&self) -> u64 {
         let (dep, rate, start, cliff, end, dust) = self.default_params();
-        self.factory.create_stream(&self.sender, &self.recipient, &dep, &rate, &start, &cliff, &end, &dust, &fluxora_stream::StreamKind::Linear, &None)
+        self.factory.create_stream(&self.sender, &self.recipient, &dep, &rate, &start, &cliff, &end, &dust, &wallie_de_sensei_stream::StreamKind::Linear, &None)
     }
 }
 
@@ -262,7 +262,7 @@ fn test_create_stream_happy_path() {
         &end,
         &dust,
         &ctx.sender, &ctx.recipient, &deposit, &rate, &start, &cliff, &end, &dust,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
 
     assert_eq!(stream_id, 0, "first stream gets id 0");
@@ -277,8 +277,8 @@ fn test_create_stream_happy_path() {
     assert_eq!(state.cliff_time, cliff);
     assert_eq!(state.end_time, end);
     assert_eq!(state.withdrawn_amount, 0);
-    assert_eq!(state.status, fluxora_stream::StreamStatus::Active);
-    assert_eq!(state.kind, fluxora_stream::StreamKind::Linear);
+    assert_eq!(state.status, wallie_de_sensei_stream::StreamStatus::Active);
+    assert_eq!(state.kind, wallie_de_sensei_stream::StreamKind::Linear);
 
     // -- recipient index ---------------------------------------------------
     let streams = ctx.stream.get_recipient_streams(&ctx.recipient);
@@ -320,7 +320,7 @@ fn test_create_stream_recipient_not_allowlisted() {
         &end,
         &dust,
         &ctx.sender, &unknown, &dep, &rate, &start, &cliff, &end, &dust,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::RecipientNotAllowlisted)));
 }
@@ -345,7 +345,7 @@ fn test_create_stream_deposit_exceeds_cap() {
         &end,
         &dust,
         &ctx.sender, &ctx.recipient, &over_cap, &rate, &start, &cliff, &end, &dust,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::DepositExceedsCap)));
 }
@@ -366,7 +366,7 @@ fn test_create_stream_deposit_at_cap_ok() {
         &end,
         &dust,
         &ctx.sender, &ctx.recipient, &MAX_DEPOSIT, &rate, &start, &cliff, &end, &dust,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_ne!(result, Err(Ok(FactoryError::DepositExceedsCap)));
 }
@@ -392,7 +392,7 @@ fn test_create_stream_duration_too_short() {
         &0,
         &ctx.sender, &ctx.recipient, &DEPOSIT_AMOUNT, &RATE_PER_SECOND,
         &start, &start, &(start + short_duration), &0,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::DurationTooShort)));
 }
@@ -414,7 +414,7 @@ fn test_create_stream_duration_at_minimum_ok() {
         &0,
         &ctx.sender, &ctx.recipient, &DEPOSIT_AMOUNT, &RATE_PER_SECOND,
         &start, &start, &(start + MIN_DURATION), &0,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_ne!(result, Err(Ok(FactoryError::DurationTooShort)));
 }
@@ -439,7 +439,7 @@ fn test_create_stream_invalid_time_range_end_before_start() {
         &0,
         &ctx.sender, &ctx.recipient, &DEPOSIT_AMOUNT, &RATE_PER_SECOND,
         &(now + 200), &(now + 200), &(now + 100), &0,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::InvalidTimeRange)));
 }
@@ -460,7 +460,7 @@ fn test_create_stream_invalid_time_range_end_equal_start() {
         &0,
         &ctx.sender, &ctx.recipient, &DEPOSIT_AMOUNT, &RATE_PER_SECOND,
         &now, &now, &now, &0,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::InvalidTimeRange)));
 }
@@ -481,7 +481,7 @@ fn test_create_stream_invalid_cliff_before_start() {
         &0,
         &ctx.sender, &ctx.recipient, &DEPOSIT_AMOUNT, &RATE_PER_SECOND,
         &(now + 100), &now, &(now + 300), &0,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::InvalidCliff)));
 }
@@ -502,7 +502,7 @@ fn test_create_stream_invalid_cliff_after_end() {
         &0,
         &ctx.sender, &ctx.recipient, &DEPOSIT_AMOUNT, &RATE_PER_SECOND,
         &now, &(now + 300), &(now + 200), &0,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::InvalidCliff)));
 }
@@ -529,7 +529,7 @@ fn test_create_stream_cliff_at_start() {
         &ctx.sender, &ctx.recipient,
         &DEPOSIT_AMOUNT, &RATE_PER_SECOND,
         &now, &now, &(now + STREAM_DURATION), &0,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
 
     let state = ctx.stream.get_stream_state(&stream_id);
@@ -556,7 +556,7 @@ fn test_create_stream_cliff_at_end() {
         &ctx.sender, &ctx.recipient,
         &DEPOSIT_AMOUNT, &RATE_PER_SECOND,
         &now, &end, &end, &0,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
 
     let state = ctx.stream.get_stream_state(&stream_id);
@@ -596,7 +596,7 @@ fn test_create_stream_requires_sender_auth() {
 
     let now = env.ledger().timestamp();
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        factory.create_stream(&sender, &recipient, &DEPOSIT_AMOUNT, &RATE_PER_SECOND, &now, &now, &(now + STREAM_DURATION), &0, &fluxora_stream::StreamKind::Linear, &None);
+        factory.create_stream(&sender, &recipient, &DEPOSIT_AMOUNT, &RATE_PER_SECOND, &now, &now, &(now + STREAM_DURATION), &0, &wallie_de_sensei_stream::StreamKind::Linear, &None);
     }));
     assert!(
         result.is_err(),
@@ -659,12 +659,12 @@ fn test_create_multiple_streams_same_recipient() {
         &end,
         &dust,
         &ctx.sender, &ctx.recipient, &dep, &rate, &start, &cliff, &end, &dust,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     // Slightly different schedule for a second stream (same duration, valid deposit)
     let id1 = ctx.factory.create_stream(
         &ctx.sender, &ctx.recipient, &dep, &rate, &start, &cliff, &(end + 100_000), &dust,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
 
     assert_eq!(id0, 0);
@@ -691,8 +691,8 @@ fn test_create_streams_different_recipients() {
 
     let (dep, rate, start, cliff, end, dust) = ctx.default_params();
 
-    ctx.factory.create_stream(&ctx.sender, &ctx.recipient, &dep, &rate, &start, &cliff, &end, &dust, &fluxora_stream::StreamKind::Linear, &None);
-    ctx.factory.create_stream(&ctx.sender, &recipient_b, &dep, &rate, &start, &cliff, &(end + 50_000), &dust, &fluxora_stream::StreamKind::Linear, &None);
+    ctx.factory.create_stream(&ctx.sender, &ctx.recipient, &dep, &rate, &start, &cliff, &end, &dust, &wallie_de_sensei_stream::StreamKind::Linear, &None);
+    ctx.factory.create_stream(&ctx.sender, &recipient_b, &dep, &rate, &start, &cliff, &(end + 50_000), &dust, &wallie_de_sensei_stream::StreamKind::Linear, &None);
 
     assert_eq!(ctx.stream.get_recipient_stream_count(&ctx.recipient), 1);
     assert_eq!(ctx.stream.get_recipient_stream_count(&recipient_b), 1);
@@ -738,7 +738,7 @@ fn test_create_stream_factory_not_initialized_returns_not_initialized() {
         &0,
         &Address::generate(&env), &Address::generate(&env),
         &DEPOSIT_AMOUNT, &RATE_PER_SECOND, &now, &now, &(now + STREAM_DURATION), &0,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::RecipientNotAllowlisted)));
 }
@@ -763,7 +763,7 @@ fn test_set_cap_enforced_end_to_end() {
         &end,
         &dust,
         &ctx.sender, &ctx.recipient, &6_000, &rate, &start, &cliff, &end, &dust,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::DepositExceedsCap)));
 }
@@ -785,7 +785,7 @@ fn test_set_min_duration_enforced_end_to_end() {
         &0,
         &ctx.sender, &ctx.recipient, &DEPOSIT_AMOUNT, &RATE_PER_SECOND,
         &now, &now, &(now + 200_000), &0,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::DurationTooShort)));
 }
@@ -806,7 +806,7 @@ fn test_remove_allowlist_enforced_end_to_end() {
         &end,
         &dust,
         &ctx.sender, &ctx.recipient, &dep, &rate, &start, &cliff, &end, &dust,
-        &fluxora_stream::StreamKind::Linear, &None,
+        &wallie_de_sensei_stream::StreamKind::Linear, &None,
     );
     assert_eq!(result, Err(Ok(FactoryError::RecipientNotAllowlisted)));
 }

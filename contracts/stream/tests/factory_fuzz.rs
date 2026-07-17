@@ -3,8 +3,8 @@
 //! Asserts that exactly the documented rejection conditions hold (iff properties),
 //! and no allowed in-policy input is wrongly rejected.
 
-use fluxora_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
-use fluxora_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
+use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
 use proptest::prelude::*;
 use soroban_sdk::{
     testutils::Address as _,
@@ -103,7 +103,7 @@ proptest! {
             &start_time, // cliff_time == start_time
             &end_time,
             &0i128, // withdraw_dust_threshold
-            &fluxora_stream::StreamKind::Linear,
+            &wallie_de_sensei_stream::StreamKind::Linear,
             &None,
         );
 

@@ -6,7 +6,7 @@
 //!    closing a completed stream succeeds gracefully even when the recipient
 //!    index entry is absent (no panic, no partial state left behind).
 
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     ContractError, FluxoraStream, FluxoraStreamClient, PauseReason, StreamKind, StreamStatus,
 };
 use soroban_sdk::{

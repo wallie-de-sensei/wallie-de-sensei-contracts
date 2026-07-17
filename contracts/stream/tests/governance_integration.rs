@@ -1,6 +1,6 @@
 extern crate std;
 
-use fluxora_governance::{
+use wallie_de_sensei_governance::{
     AdminChanged, FluxoraGovernance, FluxoraGovernanceClient, GovernanceError, SignerAdded,
     SignerRemoved,
 };

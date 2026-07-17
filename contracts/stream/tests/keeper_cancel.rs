@@ -1,6 +1,6 @@
 extern crate std;
 
-use fluxora_stream::{ContractError, FluxoraStream, FluxoraStreamClient, KeeperCancelled, StreamStatus};
+use wallie_de_sensei_stream::{ContractError, FluxoraStream, FluxoraStreamClient, KeeperCancelled, StreamStatus};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token::{Client as TokenClient, StellarAssetClient},
@@ -298,7 +298,7 @@ fn test_keeper_cancel_paused_stream_succeeds() {
     // Pause the stream at t=500
     ctx.env.ledger().set_timestamp(500);
     ctx.client()
-        .pause_stream(&stream_id, &fluxora_stream::PauseReason::Operational);
+        .pause_stream(&stream_id, &wallie_de_sensei_stream::PauseReason::Operational);
 
     // Advance past grace period (paused streams are still eligible)
     ctx.env.ledger().set_timestamp(2000 + GRACE + 1);

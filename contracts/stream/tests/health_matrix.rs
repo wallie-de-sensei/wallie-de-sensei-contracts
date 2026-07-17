@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     FluxoraStream, FluxoraStreamClient, PauseReason, StreamKind
 };
 use soroban_sdk::{

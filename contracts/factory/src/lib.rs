@@ -1,7 +1,7 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
 
-use fluxora_stream::{ContractError as StreamContractErr, FluxoraStreamClient, StreamKind};
+use wallie_de_sensei_stream::{ContractError as StreamContractErr, FluxoraStreamClient, StreamKind};
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, symbol_short, vec, Address, Bytes, Env,
     Vec,
@@ -923,7 +923,7 @@ impl FluxoraFactory {
 
         // ── Guard 8: memo length ─────────────────────────────────────────────
         if let Some(ref m) = memo {
-            if m.len() as usize > fluxora_stream::MAX_MEMO_BYTES {
+            if m.len() as usize > wallie_de_sensei_stream::MAX_MEMO_BYTES {
                 return Err(FactoryError::InvalidMemo);
             }
         }
@@ -995,7 +995,7 @@ impl FluxoraFactory {
     pub fn create_streams(
         env: Env,
         sender: Address,
-        streams: Vec<fluxora_stream::CreateStreamParams>,
+        streams: Vec<wallie_de_sensei_stream::CreateStreamParams>,
     ) -> Result<Vec<u64>, FactoryError> {
         // ── Guard 1: load the full policy in one pass ────────────────────────
         // Same chokepoint as `create_stream` — guarantees identical policy set.
@@ -1050,7 +1050,7 @@ impl FluxoraFactory {
             validate_rate_bounds(params.rate_per_second, &min_rate, &max_rate)?;
 
             if let Some(ref m) = params.memo {
-                if m.len() as usize > fluxora_stream::MAX_MEMO_BYTES {
+                if m.len() as usize > wallie_de_sensei_stream::MAX_MEMO_BYTES {
                     return Err(FactoryError::InvalidMemo);
                 }
             }

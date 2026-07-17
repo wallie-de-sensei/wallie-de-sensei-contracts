@@ -1,7 +1,7 @@
 // contracts/stream/tests/upgrade_path.rs
 #![cfg(test)]
 
-use fluxora_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     vec, Address, BytesN, Env,
@@ -64,7 +64,7 @@ impl<'a> UpgradeTestCtx<'a> {
             &end_time,
             &0,
             &None,
-            &fluxora_stream::StreamKind::Linear,
+            &wallie_de_sensei_stream::StreamKind::Linear,
         )
     }
 
@@ -85,7 +85,7 @@ fn test_upgrade_unauthorized_fails() {
         .client
         .try_upgrade(&unauthorized, &new_hash);
 
-    assert_eq!(result, Err(Ok(fluxora_stream::ContractError::Unauthorized)));
+    assert_eq!(result, Err(Ok(wallie_de_sensei_stream::ContractError::Unauthorized)));
 }
 
 /// Test that admin can upgrade the contract

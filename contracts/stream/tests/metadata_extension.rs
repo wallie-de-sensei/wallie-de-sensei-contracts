@@ -12,7 +12,7 @@ extern crate std;
 // - Empty metadata map (Some({})) is valid
 // - Boundary values at exactly MAX_METADATA_KEYS / MAX_METADATA_BYTES limits
 
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     ContractError, CreateStreamParams, CreateStreamRelativeParams, FluxoraStream,
     FluxoraStreamClient, StreamStatus, MAX_METADATA_BYTES, MAX_METADATA_KEYS,
     MAX_METADATA_KEY_BYTES, MAX_METADATA_VALUE_BYTES,
@@ -355,7 +355,7 @@ fn test_metadata_unchanged_after_pause_resume() {
     let stream_id = ctx.create_stream_with_metadata(Some(meta.clone()));
 
     ctx.client()
-        .pause_stream(&stream_id, &fluxora_stream::PauseReason::Operational);
+        .pause_stream(&stream_id, &wallie_de_sensei_stream::PauseReason::Operational);
     ctx.client().resume_stream(&stream_id);
 
     let got = ctx.client().get_stream_metadata(&stream_id).unwrap();

@@ -48,7 +48,7 @@
 
 extern crate std;
 
-use fluxora_stream::{
+use wallie_de_sensei_stream::{
     Config, DataKey, FluxoraStream, FluxoraStreamClient, Stream, StreamStatus, CONTRACT_VERSION,
 };
 use soroban_sdk::{
@@ -390,7 +390,7 @@ fn v5_global_emergency_paused_readable_by_v6() {
         &ctx.sender,
         &vec![
             &ctx.env,
-            fluxora_stream::CreateStreamParams {
+            wallie_de_sensei_stream::CreateStreamParams {
                 recipient,
                 deposit_amount: 1000,
                 rate_per_second: 1,
@@ -404,7 +404,7 @@ fn v5_global_emergency_paused_readable_by_v6() {
     );
     assert_eq!(
         err,
-        Err(Ok(fluxora_stream::ContractError::ContractPaused)),
+        Err(Ok(wallie_de_sensei_stream::ContractError::ContractPaused)),
         "V5 GlobalEmergencyPaused=true must block V6 stream creation"
     );
 }
@@ -427,7 +427,7 @@ fn v5_creation_paused_readable_by_v6() {
         &ctx.sender,
         &vec![
             &ctx.env,
-            fluxora_stream::CreateStreamParams {
+            wallie_de_sensei_stream::CreateStreamParams {
                 recipient,
                 deposit_amount: 1000,
                 rate_per_second: 1,
@@ -441,7 +441,7 @@ fn v5_creation_paused_readable_by_v6() {
     );
     assert_eq!(
         err,
-        Err(Ok(fluxora_stream::ContractError::ContractPaused)),
+        Err(Ok(wallie_de_sensei_stream::ContractError::ContractPaused)),
         "V5 CreationPaused=true must block V6 stream creation"
     );
 }

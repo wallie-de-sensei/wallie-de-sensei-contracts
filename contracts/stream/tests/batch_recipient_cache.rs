@@ -4,7 +4,7 @@
 //! same index state as creating them one-by-one, and that the O(1)-per-recipient
 //! flush path is correct for mixed-recipient batches.
 
-use fluxora_stream::{CreateStreamParams, FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{CreateStreamParams, FluxoraStream, FluxoraStreamClient};
 use soroban_sdk::{testutils::Address as _, token::Client as TokenClient, vec, Address, Env};
 
 struct Ctx<'a> {
@@ -57,7 +57,7 @@ impl<'a> Ctx<'a> {
             end_time: now + duration,
             withdraw_dust_threshold: None,
             memo: None,
-            kind: fluxora_stream::StreamKind::Linear,
+            kind: wallie_de_sensei_stream::StreamKind::Linear,
         }
     }
 }
@@ -133,7 +133,7 @@ fn test_batch_index_matches_sequential_creation() {
         &p1.end_time,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
     ctx1.client.create_stream(
         &ctx1.sender,
@@ -145,7 +145,7 @@ fn test_batch_index_matches_sequential_creation() {
         &p2.end_time,
         &0,
         &None,
-        &fluxora_stream::StreamKind::Linear,
+        &wallie_de_sensei_stream::StreamKind::Linear,
     );
     let seq_index = ctx1.client.get_recipient_streams(&recipient1);
 
