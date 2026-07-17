@@ -15,9 +15,9 @@
 # (post-compression), so raw WASM budgets are intentionally conservative.
 #
 # Per-contract raw WASM budgets (bytes):
-#   fluxora_stream    — 262 144  (256 KiB)
-#   fluxora_factory   — 131 072  (128 KiB)
-#   fluxora_governance— 131 072  (128 KiB)
+#   wallie_de_sensei_stream    — 262 144  (256 KiB)
+#   wallie_de_sensei_factory   — 131 072  (128 KiB)
+#   wallie_de_sensei_governance— 131 072  (128 KiB)
 #
 # Update these budgets when a deliberate feature addition is landed; document
 # the change in docs/gas.md and in the PR description.
@@ -39,9 +39,9 @@ done
 # Budget table: contract_name -> max_bytes
 # ---------------------------------------------------------------------------
 declare -A BUDGETS=(
-  [fluxora_stream]=262144       # 256 KiB
-  [fluxora_factory]=131072      # 128 KiB
-  [fluxora_governance]=131072   # 128 KiB
+  [wallie_de_sensei_stream]=262144       # 256 KiB
+  [wallie_de_sensei_factory]=131072      # 128 KiB
+  [wallie_de_sensei_governance]=131072   # 128 KiB
 )
 
 FAILED=0
