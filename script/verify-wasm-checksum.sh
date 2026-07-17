@@ -56,9 +56,9 @@ if [ "$BUILD" = true ]; then
   echo "Building WASM artifacts (release, wasm32-unknown-unknown)..."
   cargo build --release --target wasm32-unknown-unknown \
     --manifest-path "${REPO_ROOT}/Cargo.toml" \
-    -p fluxora_stream \
-    -p fluxora_factory \
-    -p fluxora_governance
+    -p wallie_de_sensei_stream \
+    -p wallie_de_sensei_factory \
+    -p wallie_de_sensei_governance
 fi
 
 # ---------------------------------------------------------------------------
