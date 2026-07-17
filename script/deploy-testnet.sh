@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # =============================================================================
-# deploy-testnet.sh — Fluxora Contracts | Soroban CLI deploy script for testnet
+# deploy-testnet.sh — Wallie de Sensei Contracts | Soroban CLI deploy script for testnet
 # =============================================================================
-# Builds the fluxora_stream contract, deploys it to Stellar testnet, and
+# Builds the wallie_de_sensei_stream contract, deploys it to Stellar testnet, and
 # optionally invokes `init` with a test token and admin address.
 #
 # Required environment variables:
@@ -43,12 +43,12 @@ STELLAR_RPC_URL="${STELLAR_RPC_URL:-https://soroban-testnet.stellar.org}"
 SKIP_INIT="${SKIP_INIT:-0}"
 WASM_ID_FILE="${WASM_ID_FILE:-.wasm_id}"
 CONTRACT_ID_FILE="${CONTRACT_ID_FILE:-.contract_id}"
-WASM_PATH="target/wasm32-unknown-unknown/release/fluxora_stream.wasm"
-PACKAGE_NAME="fluxora_stream"
+WASM_PATH="target/wasm32-unknown-unknown/release/wallie_de_sensei_stream.wasm"
+PACKAGE_NAME="wallie_de_sensei_stream"
 
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
-echo "║       Fluxora Contracts — Testnet Deploy Script      ║"
+echo "║   Wallie de Sensei Contracts — Testnet Deploy Script  ║"
 echo "╚══════════════════════════════════════════════════════╝"
 echo ""
 
