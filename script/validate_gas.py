@@ -15,7 +15,7 @@ def extract_baselines(file_path: str) -> Dict[str, Any]:
 def run_tests() -> str:
     print("Running gas regression tests...")
     result = subprocess.run(
-        ["cargo", "test", "-p", "fluxora_stream", "--test", "gas_regression", "--", "--nocapture"],
+        ["cargo", "test", "-p", "wallie_de_sensei_stream", "--test", "gas_regression", "--", "--nocapture"],
         capture_output=True,
         text=True,
         env={"PATH": f"{subprocess.os.environ.get('HOME', '/Users/aditya')}/.cargo/bin:{subprocess.os.environ.get('PATH', '')}"}
