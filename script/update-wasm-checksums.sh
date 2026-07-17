@@ -32,9 +32,9 @@ done
 # Add new contracts here when they are added to the workspace.
 # ---------------------------------------------------------------------------
 declare -A CONTRACTS
-CONTRACTS["fluxora_stream"]="target/wasm32-unknown-unknown/release/fluxora_stream.wasm"
-CONTRACTS["fluxora_factory"]="target/wasm32-unknown-unknown/release/fluxora_factory.wasm"
-CONTRACTS["fluxora_governance"]="target/wasm32-unknown-unknown/release/fluxora_governance.wasm"
+CONTRACTS["wallie_de_sensei_stream"]="target/wasm32-unknown-unknown/release/wallie_de_sensei_stream.wasm"
+CONTRACTS["wallie_de_sensei_factory"]="target/wasm32-unknown-unknown/release/wallie_de_sensei_factory.wasm"
+CONTRACTS["wallie_de_sensei_governance"]="target/wasm32-unknown-unknown/release/wallie_de_sensei_governance.wasm"
 
 # ---------------------------------------------------------------------------
 # Verify required tools
@@ -101,7 +101,7 @@ TODAY=$(date -u +%Y-%m-%d)
 
 {
   cat <<EOF
-# Fluxora Contract WASM Checksums
+# Wallie de Sensei Contract WASM Checksums
 #
 # Reference SHA256 checksums for reproducible WASM builds.
 # CI verifies that a fresh build produces byte-identical artifacts.
