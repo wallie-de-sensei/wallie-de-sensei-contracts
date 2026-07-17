@@ -352,7 +352,7 @@ stellar --version
 cargo build --workspace
 
 # Build specific contract
-cargo build -p fluxora_stream
+cargo build -p wallie_de_sensei_stream
 cargo build -p factory
 cargo build -p governance
 ```
@@ -364,10 +364,10 @@ cargo build -p governance
 cargo build --release --target wasm32-unknown-unknown --workspace
 
 # Build specific contract
-cargo build --release --target wasm32-unknown-unknown -p fluxora_stream
+cargo build --release --target wasm32-unknown-unknown -p wallie_de_sensei_stream
 
 # Output locations:
-# Stream:     target/wasm32-unknown-unknown/release/fluxora_stream.wasm
+# Stream:     target/wasm32-unknown-unknown/release/wallie_de_sensei_stream.wasm
 # Factory:    target/wasm32-unknown-unknown/release/factory.wasm
 # Governance: target/wasm32-unknown-unknown/release/governance.wasm
 ```
@@ -379,14 +379,14 @@ cargo build --release --target wasm32-unknown-unknown -p fluxora_stream
 cargo install wasm-opt --locked
 
 # Build and optimize
-cargo build --release --target wasm32-unknown-unknown -p fluxora_stream
+cargo build --release --target wasm32-unknown-unknown -p wallie_de_sensei_stream
 wasm-opt -Oz \
-  target/wasm32-unknown-unknown/release/fluxora_stream.wasm \
-  -o fluxora_stream_optimized.wasm
+  target/wasm32-unknown-unknown/release/wallie_de_sensei_stream.wasm \
+  -o wallie_de_sensei_stream_optimized.wasm
 
 # Verify size reduction
-ls -lh target/wasm32-unknown-unknown/release/fluxora_stream.wasm
-ls -lh fluxora_stream_optimized.wasm
+ls -lh target/wasm32-unknown-unknown/release/wallie_de_sensei_stream.wasm
+ls -lh wallie_de_sensei_stream_optimized.wasm
 ```
 
 ### 🧪 Testing Pipeline
@@ -398,7 +398,7 @@ ls -lh fluxora_stream_optimized.wasm
 cargo test --workspace
 
 # Run tests for specific contract
-cargo test -p fluxora_stream
+cargo test -p wallie_de_sensei_stream
 cargo test -p factory
 cargo test -p governance
 
@@ -413,10 +413,10 @@ cargo test test_create_stream_success
 
 ```bash
 # Run balance conservation property tests (default 256 cases)
-cargo test -p fluxora_stream --features testutils --test balance_conservation
+cargo test -p wallie_de_sensei_stream --features testutils --test balance_conservation
 
 # Deep fuzzing for audit preparation (10,000 cases)
-PROPTEST_CASES=10000 cargo test -p fluxora_stream \
+PROPTEST_CASES=10000 cargo test -p wallie_de_sensei_stream \
   --features testutils \
   --test balance_conservation \
   -- --nocapture
@@ -483,7 +483,7 @@ stellar keys address deployer
 
 # 3. Deploy stream contract
 stellar contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/fluxora_stream.wasm \
+  --wasm target/wasm32-unknown-unknown/release/wallie_de_sensei_stream.wasm \
   --source deployer \
   --network testnet \
   > stream_contract_id.txt
@@ -688,7 +688,7 @@ Every state change emits a structured event:
 
 ```bash
 # Generate WASM checksum for audit verification
-sha256sum target/wasm32-unknown-unknown/release/fluxora_stream.wasm \
+sha256sum target/wasm32-unknown-unknown/release/wallie_de_sensei_stream.wasm \
   > wasm/checksums.sha256
 
 # Verify deployed contract matches audited build
@@ -879,18 +879,18 @@ From the repo root:
 
 ```bash
 # Development build (faster compile, for local testing)
-cargo build -p fluxora_stream
+cargo build -p wallie_de_sensei_stream
 
 # Release build (optimized WASM for deployment)
-cargo build --release -p fluxora_stream --target wasm32-unknown-unknown
+cargo build --release -p wallie_de_sensei_stream --target wasm32-unknown-unknown
 ```
 
-Release WASM output: `target/wasm32-unknown-unknown/release/fluxora_stream.wasm`.
+Release WASM output: `target/wasm32-unknown-unknown/release/wallie_de_sensei_stream.wasm`.
 
 ### Run tests
 
 ```bash
-cargo test -p fluxora_stream
+cargo test -p wallie_de_sensei_stream
 ```
 
 Runs all unit and integration tests. No environment variables or external services required — Soroban's in-process test environment (`soroban_sdk::testutils`) simulates the ledger and a mock Stellar asset in memory.
@@ -904,13 +904,13 @@ Test files:
 Run the new harness with a bounded case count for CI:
 
 ```bash
-cargo test -p fluxora_stream --features testutils --test balance_conservation
+cargo test -p wallie_de_sensei_stream --features testutils --test balance_conservation
 ```
 
 For deeper local coverage before an audit or release:
 
 ```bash
-PROPTEST_CASES=10000 cargo test -p fluxora_stream --features testutils --test balance_conservation
+PROPTEST_CASES=10000 cargo test -p wallie_de_sensei_stream --features testutils --test balance_conservation
 ```
 
 ### Deploy to Stellar Testnet
@@ -982,7 +982,7 @@ After each CI build, the pipeline computes a SHA256 hash of the contract WASM ar
 
 To verify a deployment:
 
-1. Download the hash artifact from the CI run (GitHub Actions → Artifacts → `fluxora_stream-wasm-hash`).
+1. Download the hash artifact from the CI run (GitHub Actions → Artifacts → `wallie_de_sensei_stream-wasm-hash`).
 2. Rebuild locally and verify against the committed reference:
    ```bash
    bash script/verify-wasm-checksum.sh
