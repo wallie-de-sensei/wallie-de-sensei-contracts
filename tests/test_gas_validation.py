@@ -132,9 +132,9 @@ class TestCheckWasmSizeScript:
     def test_all_within_budget_passes(self, tmp_path):
         """All contracts under budget → exit 0."""
         for contract, budget in [
-            ("fluxora_stream", 262144),
-            ("fluxora_factory", 131072),
-            ("fluxora_governance", 131072),
+            ("wallie_de_sensei_stream", 262144),
+            ("wallie_de_sensei_factory", 131072),
+            ("wallie_de_sensei_governance", 131072),
         ]:
             _make_wasm(str(tmp_path), f"{contract}.wasm", budget - 1)
 
@@ -144,9 +144,9 @@ class TestCheckWasmSizeScript:
 
     def test_stream_over_budget_fails(self, tmp_path):
         """stream contract over budget → exit 1."""
-        _make_wasm(str(tmp_path), "fluxora_stream.wasm", 262145)   # 1 byte over
-        _make_wasm(str(tmp_path), "fluxora_factory.wasm", 1024)
-        _make_wasm(str(tmp_path), "fluxora_governance.wasm", 1024)
+        _make_wasm(str(tmp_path), "wallie_de_sensei_stream.wasm", 262145)   # 1 byte over
+        _make_wasm(str(tmp_path), "wallie_de_sensei_factory.wasm", 1024)
+        _make_wasm(str(tmp_path), "wallie_de_sensei_governance.wasm", 1024)
 
         result = self._invoke(str(tmp_path))
         assert result.returncode == 1
@@ -154,18 +154,18 @@ class TestCheckWasmSizeScript:
 
     def test_factory_over_budget_fails(self, tmp_path):
         """factory contract over budget → exit 1."""
-        _make_wasm(str(tmp_path), "fluxora_stream.wasm", 1024)
-        _make_wasm(str(tmp_path), "fluxora_factory.wasm", 131073)  # 1 byte over
-        _make_wasm(str(tmp_path), "fluxora_governance.wasm", 1024)
+        _make_wasm(str(tmp_path), "wallie_de_sensei_stream.wasm", 1024)
+        _make_wasm(str(tmp_path), "wallie_de_sensei_factory.wasm", 131073)  # 1 byte over
+        _make_wasm(str(tmp_path), "wallie_de_sensei_governance.wasm", 1024)
 
         result = self._invoke(str(tmp_path))
         assert result.returncode == 1
 
     def test_governance_over_budget_fails(self, tmp_path):
         """governance contract over budget → exit 1."""
-        _make_wasm(str(tmp_path), "fluxora_stream.wasm", 1024)
-        _make_wasm(str(tmp_path), "fluxora_factory.wasm", 1024)
-        _make_wasm(str(tmp_path), "fluxora_governance.wasm", 131073)  # 1 byte over
+        _make_wasm(str(tmp_path), "wallie_de_sensei_stream.wasm", 1024)
+        _make_wasm(str(tmp_path), "wallie_de_sensei_factory.wasm", 1024)
+        _make_wasm(str(tmp_path), "wallie_de_sensei_governance.wasm", 131073)  # 1 byte over
 
         result = self._invoke(str(tmp_path))
         assert result.returncode == 1
@@ -173,9 +173,9 @@ class TestCheckWasmSizeScript:
     def test_missing_artifact_fails(self, tmp_path):
         """Missing artifact → exit 1 with error message."""
         # Only create two of the three contracts.
-        _make_wasm(str(tmp_path), "fluxora_stream.wasm", 1024)
-        _make_wasm(str(tmp_path), "fluxora_factory.wasm", 1024)
-        # fluxora_governance.wasm intentionally absent.
+        _make_wasm(str(tmp_path), "wallie_de_sensei_stream.wasm", 1024)
+        _make_wasm(str(tmp_path), "wallie_de_sensei_factory.wasm", 1024)
+        # wallie_de_sensei_governance.wasm intentionally absent.
 
         result = self._invoke(str(tmp_path))
         assert result.returncode == 1
@@ -184,9 +184,9 @@ class TestCheckWasmSizeScript:
     def test_exact_budget_boundary_passes(self, tmp_path):
         """Artifact exactly at budget → still passes (budget is inclusive)."""
         for contract, budget in [
-            ("fluxora_stream", 262144),
-            ("fluxora_factory", 131072),
-            ("fluxora_governance", 131072),
+            ("wallie_de_sensei_stream", 262144),
+            ("wallie_de_sensei_factory", 131072),
+            ("wallie_de_sensei_governance", 131072),
         ]:
             _make_wasm(str(tmp_path), f"{contract}.wasm", budget)
 
@@ -196,9 +196,9 @@ class TestCheckWasmSizeScript:
     def test_optimized_flag_checks_optimized_files(self, tmp_path):
         """--optimized flag reads *.optimized.wasm files."""
         for contract, budget in [
-            ("fluxora_stream", 262144),
-            ("fluxora_factory", 131072),
-            ("fluxora_governance", 131072),
+            ("wallie_de_sensei_stream", 262144),
+            ("wallie_de_sensei_factory", 131072),
+            ("wallie_de_sensei_governance", 131072),
         ]:
             _make_wasm(str(tmp_path), f"{contract}.optimized.wasm", budget - 1)
 
@@ -213,9 +213,9 @@ class TestCheckWasmSizeScript:
     def test_headroom_reported_in_stdout(self, tmp_path):
         """Passing run reports headroom for each contract."""
         for contract, budget in [
-            ("fluxora_stream", 262144),
-            ("fluxora_factory", 131072),
-            ("fluxora_governance", 131072),
+            ("wallie_de_sensei_stream", 262144),
+            ("wallie_de_sensei_factory", 131072),
+            ("wallie_de_sensei_governance", 131072),
         ]:
             _make_wasm(str(tmp_path), f"{contract}.wasm", budget // 2)
 
