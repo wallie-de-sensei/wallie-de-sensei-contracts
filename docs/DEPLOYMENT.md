@@ -50,10 +50,10 @@ A quick, step-by-step guide to deploying the Fluxora stream contract to Stellar 
 ### 1. Build the contract
 
 ```bash
-cargo build --release -p fluxora_stream --target wasm32-unknown-unknown
+cargo build --release -p wallie_de_sensei_stream --target wasm32-unknown-unknown
 ```
 
-Expected output: `target/wasm32-unknown-unknown/release/fluxora_stream.wasm` (~150 KB)
+Expected output: `target/wasm32-unknown-unknown/release/wallie_de_sensei_stream.wasm` (~150 KB)
 
 ### 2. Upload & deploy via script (recommended)
 
@@ -81,7 +81,7 @@ If you prefer to deploy manually:
 ```bash
 # Step 1: Upload WASM
 WASM_ID=$(stellar contract upload \
-  --wasm target/wasm32-unknown-unknown/release/fluxora_stream.wasm \
+  --wasm target/wasm32-unknown-unknown/release/wallie_de_sensei_stream.wasm \
   --network testnet \
   --source "$STELLAR_SECRET_KEY" \
   --rpc-url https://soroban-testnet.stellar.org)
@@ -370,7 +370,7 @@ V6 introduces no irreversible on-chain state changes that would prevent rollback
 
 ```bash
 # 1. Build V6 WASM
-cargo build --release -p fluxora_stream --target wasm32-unknown-unknown
+cargo build --release -p wallie_de_sensei_stream --target wasm32-unknown-unknown
 
 # 2. Verify version constant
 grep "CONTRACT_VERSION" contracts/stream/src/lib.rs
@@ -408,7 +408,7 @@ stellar contract invoke --id $(cat .contract_id) -- get_delegated_nonce \
 | Step | Command |
 |---|---|
 | **Setup** | `cp .env.example .env` → fill in env vars |
-| **Build** | `cargo build --release -p fluxora_stream --target wasm32-unknown-unknown` |
+| **Build** | `cargo build --release -p wallie_de_sensei_stream --target wasm32-unknown-unknown` |
 | **Deploy** | `bash script/deploy-testnet.sh` |
 | **Verify** | `stellar contract invoke --id $(cat .contract_id) -- get_config` |
 | **Test stream** | `stellar contract invoke --id $(cat .contract_id) -- create_stream ...` |
