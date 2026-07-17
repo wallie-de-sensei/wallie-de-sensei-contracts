@@ -67,15 +67,15 @@ Run the full test suite before submitting:
 cargo test --workspace
 
 # Run specific contract tests
-cargo test -p fluxora_stream
-cargo test -p factory
-cargo test -p governance
+cargo test -p wallie_de_sensei_stream
+cargo test -p wallie_de_sensei_factory
+cargo test -p wallie_de_sensei_governance
 
 # Run with verbose output
 cargo test -- --nocapture
 
 # Run property-based tests with more cases
-PROPTEST_CASES=10000 cargo test -p fluxora_stream --test balance_conservation
+PROPTEST_CASES=10000 cargo test -p wallie_de_sensei_stream --test balance_conservation
 ```
 
 ### Code Quality Checks
