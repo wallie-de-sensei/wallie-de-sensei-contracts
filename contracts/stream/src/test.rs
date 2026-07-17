@@ -7,7 +7,7 @@ use soroban_sdk::{
 };
 
 use crate::{
-    ContractError, ContractPauseChanged, CreateStreamParams, FluxoraStream, FluxoraStreamClient,
+    ContractError, ContractPauseChanged, CreateStreamParams, WallieDeSenseiStream, WallieDeSenseiStreamClient,
     GlobalEmergencyPauseChanged, StreamCreated, StreamEndShortened, StreamEvent, StreamPaused,
     StreamStatus, StreamToppedUp, WithdrawToParam, WithdrawalTo,
 };
@@ -33,7 +33,7 @@ impl<'a> TestContext<'a> {
         env.mock_all_auths();
 
         // Deploy the streaming contract
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
 
         // Create a mock SAC token (Stellar Asset Contract)
         let token_admin = Address::generate(&env);
@@ -46,7 +46,7 @@ impl<'a> TestContext<'a> {
         let recipient = Address::generate(&env);
 
         // Initialise the streaming contract
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         client.init(&token_id, &admin);
 
         // Mint tokens to sender (10_000 USDC-equivalent)
@@ -73,7 +73,7 @@ impl<'a> TestContext<'a> {
     pub(crate) fn setup_strict() -> Self {
         let env = Env::default();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
 
         let token_admin = Address::generate(&env);
         let token_id = env
@@ -84,7 +84,7 @@ impl<'a> TestContext<'a> {
         let sender = Address::generate(&env);
         let recipient = Address::generate(&env);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
         // init requires bootstrap admin authorization in strict mode.
         use soroban_sdk::{testutils::MockAuth, testutils::MockAuthInvoke, IntoVal};
@@ -136,8 +136,8 @@ impl<'a> TestContext<'a> {
         }
     }
 
-    pub(crate) fn client(&self) -> FluxoraStreamClient<'_> {
-        FluxoraStreamClient::new(&self.env, &self.contract_id)
+    pub(crate) fn client(&self) -> WallieDeSenseiStreamClient<'_> {
+        WallieDeSenseiStreamClient::new(&self.env, &self.contract_id)
     }
 
     pub(crate) fn token(&self) -> TokenClient<'_> {
@@ -231,8 +231,8 @@ impl<'a> TestContext<'a> {
 fn test_init_stores_token_and_admin() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let token = Address::generate(&env);
     let admin = Address::generate(&env);
@@ -248,10 +248,10 @@ fn test_init_stores_token_and_admin() {
 fn test_init_requires_admin_authorization_in_strict_mode() {
     let env = Env::default();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_id = Address::generate(&env);
     let admin = Address::generate(&env);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     use soroban_sdk::testutils::{MockAuth, MockAuthInvoke};
     env.mock_auths(&[MockAuth {
@@ -274,11 +274,11 @@ fn test_init_requires_admin_authorization_in_strict_mode() {
 fn test_init_rejects_wrong_signer_and_has_no_side_effects() {
     let env = Env::default();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_id = Address::generate(&env);
     let admin = Address::generate(&env);
     let attacker = Address::generate(&env);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     use soroban_sdk::testutils::{MockAuth, MockAuthInvoke};
     env.mock_auths(&[MockAuth {
@@ -311,8 +311,8 @@ fn test_init_rejects_wrong_signer_and_has_no_side_effects() {
 fn test_init_second_call_fails() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let token = Address::generate(&env);
     let admin = Address::generate(&env);
@@ -326,8 +326,8 @@ fn test_init_second_call_fails() {
 #[test]
 fn test_get_config_before_init_fails() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_get_config();
     assert_eq!(result, Err(Ok(ContractError::InvalidState)));
@@ -342,8 +342,8 @@ fn test_get_config_before_init_fails() {
 #[test]
 fn test_get_config_uninitialized_contract_panics() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     // Calling get_config before init must return InvalidState
     let result = client.try_get_config();
@@ -355,11 +355,11 @@ fn test_init_stores_config() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_id = Address::generate(&env);
     let admin = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     let config = client.get_config();
@@ -372,11 +372,11 @@ fn test_init_twice_panics() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_id = Address::generate(&env);
     let admin = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     // Second init should return AlreadyInitialised
@@ -391,11 +391,11 @@ fn test_init_sets_stream_counter_to_zero() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_id = Address::generate(&env);
     let admin = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     // Create a stream to verify counter starts at 0
@@ -409,8 +409,8 @@ fn test_init_sets_stream_counter_to_zero() {
         .address();
 
     // Re-init with the SAC token — must be done before approve so contract_id2 is known
-    let contract_id2 = env.register_contract(None, FluxoraStream);
-    let client2 = FluxoraStreamClient::new(&env, &contract_id2);
+    let contract_id2 = env.register_contract(None, WallieDeSenseiStream);
+    let client2 = WallieDeSenseiStreamClient::new(&env, &contract_id2);
     client2.init(&sac_token_id, &admin);
 
     let sac = StellarAssetClient::new(&env, &sac_token_id);
@@ -474,14 +474,14 @@ fn test_init_with_different_addresses() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_id = Address::generate(&env);
     let admin = Address::generate(&env);
 
     // Ensure token and admin are different
     assert_ne!(token_id, admin);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     let config = client.get_config();
@@ -500,11 +500,11 @@ fn test_reinit_same_token_same_admin_panics() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_id = Address::generate(&env);
     let admin = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     // Second init with identical arguments must return AlreadyInitialised
@@ -518,11 +518,11 @@ fn test_reinit_different_token_same_admin_panics() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_id = Address::generate(&env);
     let admin = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     // Second init with different token but same admin must return AlreadyInitialised
@@ -537,11 +537,11 @@ fn test_reinit_same_token_different_admin_panics() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_id = Address::generate(&env);
     let admin = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     // Second init with same token but different admin must return AlreadyInitialised
@@ -556,11 +556,11 @@ fn test_config_unchanged_after_failed_reinit() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_id = Address::generate(&env);
     let admin = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     // Capture original config
@@ -591,7 +591,7 @@ fn test_operations_work_after_failed_reinit() {
     env.mock_all_auths();
 
     // Deploy contract and set up a real SAC token
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin.clone())
@@ -600,7 +600,7 @@ fn test_operations_work_after_failed_reinit() {
     let sender = Address::generate(&env);
     let recipient = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     // Fund the sender
@@ -5007,7 +5007,7 @@ fn test_pause_stream_as_recipient_fails() {
     let stream_id = ctx.create_default_stream();
 
     let env = Env::default();
-    let client = FluxoraStreamClient::new(&env, &ctx.contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &ctx.contract_id);
 
     client.pause_stream(&stream_id, &crate::PauseReason::Operational);
 }
@@ -5019,7 +5019,7 @@ fn test_cancel_stream_as_random_address_fails() {
     let stream_id = ctx.create_default_stream();
 
     let env = Env::default();
-    let client = FluxoraStreamClient::new(&env, &ctx.contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &ctx.contract_id);
 
     client.cancel_stream(&stream_id);
 }
@@ -12160,7 +12160,7 @@ fn test_recipient_stream_index_multiple_senders() {
 #[test]
 fn test_recipient_index_binary_search_edge_cases() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, crate::FluxoraStream);
+    let contract_id = env.register_contract(None, crate::WallieDeSenseiStream);
     let recipient = Address::generate(&env);
 
     env.as_contract(&contract_id, || {
@@ -15126,8 +15126,8 @@ fn test_resume_authorization_matrix() {
 fn regression_double_init_identical_args_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let token = Address::generate(&env);
     let admin = Address::generate(&env);
@@ -15143,8 +15143,8 @@ fn regression_double_init_identical_args_panics() {
 fn regression_double_init_different_token_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let token1 = Address::generate(&env);
     let admin = Address::generate(&env);
@@ -15159,8 +15159,8 @@ fn regression_double_init_different_token_panics() {
 fn regression_double_init_different_admin_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let token = Address::generate(&env);
     let admin1 = Address::generate(&env);
@@ -15175,8 +15175,8 @@ fn regression_double_init_different_admin_panics() {
 fn regression_double_init_both_different_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     client.init(&Address::generate(&env), &Address::generate(&env));
     client.init(&Address::generate(&env), &Address::generate(&env));
@@ -15188,8 +15188,8 @@ fn regression_double_init_both_different_panics() {
 fn regression_double_init_preserves_config_fields() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let token_original = Address::generate(&env);
     let admin_original = Address::generate(&env);
@@ -15231,8 +15231,8 @@ fn regression_double_init_preserves_config_fields() {
 fn regression_double_init_preserves_stream_counter() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let token = Address::generate(&env);
     let admin = Address::generate(&env);
@@ -15259,7 +15259,7 @@ fn regression_double_init_preserves_stream_counter() {
 fn regression_double_init_repeated_attacks_do_not_degrade_contract() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
 
     let token_admin = Address::generate(&env);
     let token_id = env
@@ -15269,7 +15269,7 @@ fn regression_double_init_repeated_attacks_do_not_degrade_contract() {
     let sender = Address::generate(&env);
     let recipient = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     let sac = StellarAssetClient::new(&env, &token_id);
@@ -15322,7 +15322,7 @@ fn regression_double_init_repeated_attacks_do_not_degrade_contract() {
 fn regression_double_init_existing_stream_survives() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
 
     let token_admin = Address::generate(&env);
     let token_id = env
@@ -15332,7 +15332,7 @@ fn regression_double_init_existing_stream_survives() {
     let sender = Address::generate(&env);
     let recipient = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     let sac = StellarAssetClient::new(&env, &token_id);
@@ -15383,7 +15383,7 @@ fn regression_double_init_existing_stream_survives() {
 fn regression_double_init_counter_continuity() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
 
     let token_admin = Address::generate(&env);
     let token_id = env
@@ -15393,7 +15393,7 @@ fn regression_double_init_counter_continuity() {
     let sender = Address::generate(&env);
     let recipient = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     let sac = StellarAssetClient::new(&env, &token_id);
@@ -15461,8 +15461,8 @@ fn regression_double_init_counter_continuity() {
 fn regression_double_init_emits_no_events() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let token = Address::generate(&env);
     let admin = Address::generate(&env);
@@ -15495,8 +15495,8 @@ fn regression_double_init_emits_no_events() {
 #[should_panic]
 fn regression_missing_config_get_config_panics() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.get_config();
 }
 
@@ -15506,8 +15506,8 @@ fn regression_missing_config_get_config_panics() {
 #[test]
 fn regression_missing_config_get_stream_count_returns_zero() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     assert_eq!(
         client.get_stream_count(),
         0,
@@ -15522,8 +15522,8 @@ fn regression_missing_config_get_stream_count_returns_zero() {
 fn regression_missing_config_create_stream_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     let sender = Address::generate(&env);
     let recipient = Address::generate(&env);
 
@@ -15548,8 +15548,8 @@ fn regression_missing_config_create_stream_panics() {
 fn regression_missing_config_create_streams_batch_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     let sender = Address::generate(&env);
     let recipient = Address::generate(&env);
 
@@ -15578,8 +15578,8 @@ fn regression_missing_config_create_streams_batch_panics() {
 fn regression_missing_config_set_global_emergency_paused_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.set_global_emergency_paused(&true);
 }
 
@@ -15590,8 +15590,8 @@ fn regression_missing_config_set_global_emergency_paused_panics() {
 fn regression_missing_config_set_admin_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     let new_admin = Address::generate(&env);
     client.set_admin(&new_admin);
 }
@@ -15602,8 +15602,8 @@ fn regression_missing_config_set_admin_panics() {
 #[test]
 fn regression_missing_config_version_still_works() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     let version = client.version();
     assert_eq!(
         version,
@@ -15618,8 +15618,8 @@ fn regression_missing_config_version_still_works() {
 #[test]
 fn regression_missing_config_get_stream_state_panics() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_get_stream_state(&0);
     assert!(
@@ -15633,8 +15633,8 @@ fn regression_missing_config_get_stream_state_panics() {
 #[test]
 fn regression_missing_config_calculate_accrued_panics() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_calculate_accrued(&0);
     assert!(
@@ -15648,8 +15648,8 @@ fn regression_missing_config_calculate_accrued_panics() {
 #[test]
 fn regression_missing_config_get_withdrawable_panics() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_get_withdrawable(&0);
     assert!(
@@ -15663,8 +15663,8 @@ fn regression_missing_config_get_withdrawable_panics() {
 #[test]
 fn regression_missing_config_get_claimable_at_panics() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_get_claimable_at(&0, &500);
     assert!(
@@ -15678,8 +15678,8 @@ fn regression_missing_config_get_claimable_at_panics() {
 fn regression_missing_config_withdraw_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_withdraw(&0);
     assert!(
@@ -15693,8 +15693,8 @@ fn regression_missing_config_withdraw_panics() {
 fn regression_missing_config_cancel_stream_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_cancel_stream(&0);
     assert!(
@@ -15710,8 +15710,8 @@ fn regression_missing_config_cancel_stream_panics() {
 fn regression_missing_config_cancel_stream_as_admin_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.cancel_stream_as_admin(&0);
 }
 
@@ -15721,8 +15721,8 @@ fn regression_missing_config_cancel_stream_as_admin_panics() {
 fn regression_missing_config_pause_stream_as_admin_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.pause_stream_as_admin(&0, &crate::PauseReason::Administrative);
 }
 
@@ -15732,8 +15732,8 @@ fn regression_missing_config_pause_stream_as_admin_panics() {
 fn regression_missing_config_resume_stream_as_admin_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.resume_stream_as_admin(&0);
 }
 
@@ -15742,8 +15742,8 @@ fn regression_missing_config_resume_stream_as_admin_panics() {
 fn regression_missing_config_pause_stream_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_pause_stream(&0, &crate::PauseReason::Operational);
     assert!(
@@ -15757,8 +15757,8 @@ fn regression_missing_config_pause_stream_panics() {
 fn regression_missing_config_resume_stream_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_resume_stream(&0);
     assert!(
@@ -15772,8 +15772,8 @@ fn regression_missing_config_resume_stream_panics() {
 #[test]
 fn regression_missing_config_get_recipient_streams_returns_empty() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     let recipient = Address::generate(&env);
     let streams = client.get_recipient_streams(&recipient);
     assert_eq!(
@@ -15787,8 +15787,8 @@ fn regression_missing_config_get_recipient_streams_returns_empty() {
 #[test]
 fn regression_missing_config_get_recipient_stream_count_returns_zero() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     let recipient = Address::generate(&env);
     assert_eq!(
         client.get_recipient_stream_count(&recipient),
@@ -15802,8 +15802,8 @@ fn regression_missing_config_get_recipient_stream_count_returns_zero() {
 fn regression_missing_config_top_up_stream_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     let funder = Address::generate(&env);
 
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -15820,8 +15820,8 @@ fn regression_missing_config_top_up_stream_panics() {
 fn regression_missing_config_update_rate_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_update_rate_per_second(&0, &2_i128);
     assert!(
@@ -15835,8 +15835,8 @@ fn regression_missing_config_update_rate_panics() {
 fn regression_missing_config_shorten_stream_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_shorten_stream_end_time(&0, &500u64);
     assert!(
@@ -15850,8 +15850,8 @@ fn regression_missing_config_shorten_stream_panics() {
 fn regression_missing_config_extend_stream_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_extend_stream_end_time(&0, &2000u64);
     assert!(
@@ -15865,8 +15865,8 @@ fn regression_missing_config_extend_stream_panics() {
 fn regression_missing_config_close_completed_stream_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_close_completed_stream(&0);
     assert!(
@@ -15880,8 +15880,8 @@ fn regression_missing_config_close_completed_stream_panics() {
 fn regression_missing_config_batch_withdraw_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     let recipient = Address::generate(&env);
     let ids = soroban_sdk::vec![&env, 0u64];
 
@@ -15897,8 +15897,8 @@ fn regression_missing_config_batch_withdraw_panics() {
 fn regression_missing_config_withdraw_to_panics() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     let destination = Address::generate(&env);
 
     let result = client.try_withdraw_to(&0, &destination);
@@ -15918,7 +15918,7 @@ fn regression_missing_config_withdraw_to_panics() {
 fn regression_double_init_interleaved_with_lifecycle() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
 
     let token_admin = Address::generate(&env);
     let token_id = env
@@ -15928,7 +15928,7 @@ fn regression_double_init_interleaved_with_lifecycle() {
     let sender = Address::generate(&env);
     let recipient = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     let sac = StellarAssetClient::new(&env, &token_id);
@@ -16571,8 +16571,8 @@ fn claimable_at_stream_not_found() {
 fn claimable_at_uninitialised_returns_stream_not_found() {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let result = client.try_get_claimable_at(&0, &100u64);
     assert!(result.is_err());
@@ -17938,7 +17938,7 @@ mod i128_boundary_streams {
     fn setup_with_balance(balance: i128) -> (Env, Address, Address, Address, Address, Address) {
         let env = Env::default();
         env.mock_all_auths();
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin.clone())
@@ -17946,7 +17946,7 @@ mod i128_boundary_streams {
         let admin = Address::generate(&env);
         let sender = Address::generate(&env);
         let recipient = Address::generate(&env);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         client.init(&token_id, &admin);
         let sac = StellarAssetClient::new(&env, &token_id);
         sac.mint(&sender, &balance);
@@ -17969,7 +17969,7 @@ mod i128_boundary_streams {
     fn near_max_deposit_creation_persists_correct_state() {
         let (env, contract_id, _token_id, _admin, sender, recipient) =
             setup_with_balance(NEAR_MAX_DEPOSIT);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18001,7 +18001,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000; // duration = 1000s
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18028,7 +18028,7 @@ mod i128_boundary_streams {
     fn near_max_deposit_creation_emits_correct_event() {
         let (env, contract_id, _token_id, _admin, sender, recipient) =
             setup_with_balance(NEAR_MAX_DEPOSIT);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18065,7 +18065,7 @@ mod i128_boundary_streams {
         let rate: i128 = i128::MAX / 2;
         let deposit: i128 = i128::MAX / 2; // not enough to cover overflow
         let (env, contract_id, _token_id, _admin, sender, recipient) = setup_with_balance(deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let count_before = client.get_stream_count();
@@ -18104,7 +18104,7 @@ mod i128_boundary_streams {
         let deposit = required - 1; // one token short
 
         let (env, contract_id, token_id, _admin, sender, recipient) = setup_with_balance(deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let result = client.try_create_stream(
@@ -18136,7 +18136,7 @@ mod i128_boundary_streams {
     #[test]
     fn near_max_deposit_accrued_zero_at_start() {
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(NEAR_MAX_DEPOSIT);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18160,7 +18160,7 @@ mod i128_boundary_streams {
     #[test]
     fn near_max_deposit_accrued_equals_deposit_at_end() {
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(NEAR_MAX_DEPOSIT);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18185,7 +18185,7 @@ mod i128_boundary_streams {
     #[test]
     fn near_max_deposit_accrued_capped_long_after_end() {
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(NEAR_MAX_DEPOSIT);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18212,7 +18212,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18239,7 +18239,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18278,7 +18278,7 @@ mod i128_boundary_streams {
         // returns deposit_amount (not a panic) when the accrual math would overflow.
         let deposit: i128 = NEAR_MAX_DEPOSIT;
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18311,7 +18311,7 @@ mod i128_boundary_streams {
     fn near_max_deposit_full_withdrawal_completes_stream() {
         let (env, contract_id, token_id, _a, sender, recipient) =
             setup_with_balance(NEAR_MAX_DEPOSIT);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         let token = soroban_sdk::token::Client::new(&env, &token_id);
         env.ledger().set_timestamp(0);
 
@@ -18344,7 +18344,7 @@ mod i128_boundary_streams {
     #[test]
     fn near_max_withdrawal_event_carries_correct_amount() {
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(NEAR_MAX_DEPOSIT);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18388,7 +18388,7 @@ mod i128_boundary_streams {
         let rate: i128 = large_deposit / 1_000;
         let _duration: u64 = 1_000;
         let (env, contract_id, token_id, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         let token = soroban_sdk::token::Client::new(&env, &token_id);
         env.ledger().set_timestamp(0);
 
@@ -18438,7 +18438,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, token_id, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         let token = soroban_sdk::token::Client::new(&env, &token_id);
         env.ledger().set_timestamp(0);
 
@@ -18472,7 +18472,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, token_id, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         let token = soroban_sdk::token::Client::new(&env, &token_id);
         env.ledger().set_timestamp(0);
 
@@ -18513,7 +18513,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18548,7 +18548,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, token_id, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         let token = soroban_sdk::token::Client::new(&env, &token_id);
         env.ledger().set_timestamp(0);
 
@@ -18588,7 +18588,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18619,7 +18619,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18651,7 +18651,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -18682,7 +18682,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, token_id, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         let token = soroban_sdk::token::Client::new(&env, &token_id);
         env.ledger().set_timestamp(0);
 
@@ -18722,7 +18722,7 @@ mod i128_boundary_streams {
         let per_deposit: i128 = i128::MAX / 2 + 1;
         let rate: i128 = per_deposit; // duration=1
         let (env, contract_id, token_id, _a, sender, _r) = setup_with_balance(i128::MAX / 2);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         let token = soroban_sdk::token::Client::new(&env, &token_id);
         env.ledger().set_timestamp(0);
 
@@ -18765,7 +18765,7 @@ mod i128_boundary_streams {
         let valid_deposit: i128 = i128::MAX / 1_000_000;
         let valid_rate: i128 = valid_deposit / 1_000;
         let (env, contract_id, token_id, _a, sender, _r) = setup_with_balance(valid_deposit * 2);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         let token = soroban_sdk::token::Client::new(&env, &token_id);
         env.ledger().set_timestamp(0);
 
@@ -18815,7 +18815,7 @@ mod i128_boundary_streams {
         let large_deposit: i128 = i128::MAX / 1_000_000;
         let rate: i128 = large_deposit / 1_000;
         let (env, contract_id, _t, _a, sender, recipient) = setup_with_balance(large_deposit);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         env.ledger().set_timestamp(0);
 
         let stream_id = client.create_stream(
@@ -19502,7 +19502,7 @@ mod structured_error_tests {
     #[test]
     fn batch_withdraw_duplicate_stream_ids_returns_structured_error() {
         let ctx = TestContext::setup();
-        let client = FluxoraStreamClient::new(&ctx.env, &ctx.contract_id);
+        let client = WallieDeSenseiStreamClient::new(&ctx.env, &ctx.contract_id);
 
         let stream_id = client.create_stream(
             &ctx.sender,
@@ -19540,7 +19540,7 @@ mod structured_error_tests {
     #[test]
     fn create_streams_batch_deposit_overflow_returns_structured_error() {
         let ctx = TestContext::setup();
-        let client = FluxoraStreamClient::new(&ctx.env, &ctx.contract_id);
+        let client = WallieDeSenseiStreamClient::new(&ctx.env, &ctx.contract_id);
 
         // Two entries whose deposits sum to > i128::MAX
         let half = i128::MAX / 2 + 1;
@@ -19587,7 +19587,7 @@ mod structured_error_tests {
     #[test]
     fn update_rate_overflow_returns_structured_error() {
         let ctx = TestContext::setup();
-        let client = FluxoraStreamClient::new(&ctx.env, &ctx.contract_id);
+        let client = WallieDeSenseiStreamClient::new(&ctx.env, &ctx.contract_id);
 
         // Create a stream with a very large end_time so duration is huge
         let large_end: u64 = u64::MAX / 2;
@@ -19625,7 +19625,7 @@ mod structured_error_tests {
     #[test]
     fn globally_paused_withdraw_returns_contract_paused_error() {
         let ctx = TestContext::setup();
-        let client = FluxoraStreamClient::new(&ctx.env, &ctx.contract_id);
+        let client = WallieDeSenseiStreamClient::new(&ctx.env, &ctx.contract_id);
 
         let stream_id = client.create_stream(
             &ctx.sender,
@@ -19655,7 +19655,7 @@ mod structured_error_tests {
     #[test]
     fn globally_paused_cancel_returns_contract_paused_error() {
         let ctx = TestContext::setup();
-        let client = FluxoraStreamClient::new(&ctx.env, &ctx.contract_id);
+        let client = WallieDeSenseiStreamClient::new(&ctx.env, &ctx.contract_id);
 
         let stream_id = client.create_stream(
             &ctx.sender,
@@ -19685,7 +19685,7 @@ mod structured_error_tests {
     #[test]
     fn test_batch_withdraw_to_returns_contract_paused_when_globally_paused() {
         let ctx = TestContext::setup();
-        let client = FluxoraStreamClient::new(&ctx.env, &ctx.contract_id);
+        let client = WallieDeSenseiStreamClient::new(&ctx.env, &ctx.contract_id);
 
         let stream_id = client.create_stream(
             &ctx.sender,
@@ -19725,7 +19725,7 @@ mod structured_error_tests {
     #[test]
     fn test_decrease_rate_per_second_returns_contract_paused_when_globally_paused() {
         let ctx = TestContext::setup();
-        let client = FluxoraStreamClient::new(&ctx.env, &ctx.contract_id);
+        let client = WallieDeSenseiStreamClient::new(&ctx.env, &ctx.contract_id);
 
         // Use a generous deposit so the original rate is 5/s and we can decrease to 1/s.
         let stream_id = client.create_stream(

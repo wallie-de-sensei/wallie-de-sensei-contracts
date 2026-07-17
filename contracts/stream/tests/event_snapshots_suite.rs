@@ -29,7 +29,7 @@
 extern crate std;
 
 use wallie_de_sensei_stream::{
-    ContractPauseChanged, DataKey, FluxoraStream, FluxoraStreamClient, PauseReason, RateUpdated,
+    ContractPauseChanged, DataKey, WallieDeSenseiStream, WallieDeSenseiStreamClient, PauseReason, RateUpdated,
     RecipientUpdated, Stream, StreamCreated, StreamEndExtended, StreamEndShortened,
     StreamHealthChanged, StreamPaused, StreamToppedUp, Withdrawal, WithdrawalTo,
 };
@@ -56,7 +56,7 @@ impl<'a> EventTestContext<'a> {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
 
         let token_admin = Address::generate(&env);
         let token_id = env
@@ -67,7 +67,7 @@ impl<'a> EventTestContext<'a> {
         let sender = Address::generate(&env);
         let recipient = Address::generate(&env);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         client.init(&token_id, &admin);
 
         let sac = StellarAssetClient::new(&env, &token_id);
@@ -87,8 +87,8 @@ impl<'a> EventTestContext<'a> {
         }
     }
 
-    fn client(&self) -> FluxoraStreamClient<'_> {
-        FluxoraStreamClient::new(&self.env, &self.contract_id)
+    fn client(&self) -> WallieDeSenseiStreamClient<'_> {
+        WallieDeSenseiStreamClient::new(&self.env, &self.contract_id)
     }
 
     /// Extract first event topic as a symbol (normalized)

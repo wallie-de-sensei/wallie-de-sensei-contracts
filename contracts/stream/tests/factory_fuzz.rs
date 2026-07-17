@@ -3,8 +3,8 @@
 //! Asserts that exactly the documented rejection conditions hold (iff properties),
 //! and no allowed in-policy input is wrongly rejected.
 
-use wallie_de_sensei_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
-use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_factory::{FactoryError, WallieDeSenseiFactory, WallieDeSenseiFactoryClient};
+use wallie_de_sensei_stream::{WallieDeSenseiStream, WallieDeSenseiStreamClient};
 use proptest::prelude::*;
 use soroban_sdk::{
     testutils::Address as _,
@@ -14,9 +14,9 @@ use soroban_sdk::{
 
 struct Ctx<'a> {
     env: Env,
-    factory: FluxoraFactoryClient<'a>,
+    factory: WallieDeSenseiFactoryClient<'a>,
     #[allow(dead_code)]
-    stream: FluxoraStreamClient<'a>,
+    stream: WallieDeSenseiStreamClient<'a>,
     admin: Address,
     sender: Address,
     #[allow(dead_code)]
@@ -29,12 +29,12 @@ impl<'a> Ctx<'a> {
         env.mock_all_auths();
 
         // Deploy stream contract
-        let stream_id = env.register_contract(None, FluxoraStream);
-        let stream = FluxoraStreamClient::new(&env, &stream_id);
+        let stream_id = env.register_contract(None, WallieDeSenseiStream);
+        let stream = WallieDeSenseiStreamClient::new(&env, &stream_id);
 
         // Deploy factory contract
-        let factory_id = env.register_contract(None, FluxoraFactory);
-        let factory = FluxoraFactoryClient::new(&env, &factory_id);
+        let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+        let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
 
         // Token setup
         let token_admin = Address::generate(&env);

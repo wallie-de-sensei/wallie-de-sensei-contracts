@@ -6,7 +6,7 @@
 extern crate std;
 
 use wallie_de_sensei_stream::{
-    ContractError, FluxoraStream, FluxoraStreamClient, StreamKind, MAX_ID_RESERVATION,
+    ContractError, WallieDeSenseiStream, WallieDeSenseiStreamClient, StreamKind, MAX_ID_RESERVATION,
 };
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
@@ -16,7 +16,7 @@ use soroban_sdk::{
 
 struct Ctx<'a> {
     env: Env,
-    client: FluxoraStreamClient<'a>,
+    client: WallieDeSenseiStreamClient<'a>,
     contract_id: Address,
     sender: Address,
     token_id: Address,
@@ -27,8 +27,8 @@ impl<'a> Ctx<'a> {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
         let token_admin = Address::generate(&env);
         let token_id = env

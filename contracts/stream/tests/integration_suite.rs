@@ -3,7 +3,7 @@
 extern crate std;
 
 use wallie_de_sensei_stream::{
-    ContractError, CreateStreamParams, FluxoraStream, FluxoraStreamClient, PauseReason,
+    ContractError, CreateStreamParams, WallieDeSenseiStream, WallieDeSenseiStreamClient, PauseReason,
     StreamHealth, StreamStatus,
 };
 use proptest::prelude::*;
@@ -17,7 +17,7 @@ use soroban_sdk::{
 
 struct TestContext<'a> {
     env: Env,
-    client: FluxoraStreamClient<'a>,
+    client: WallieDeSenseiStreamClient<'a>,
     sender: Address,
     token: TokenClient<'a>,
 }
@@ -29,8 +29,8 @@ impl<'a> TestContext<'a> {
             env.mock_all_auths();
         }
 
-        let contract_id = env.register_contract(None, FluxoraStream);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
         let token_admin = Address::generate(&env);
         let token_id = env
@@ -1625,8 +1625,8 @@ fn init_accepts_valid_sep41_token() {
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
         .address();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     assert_eq!(client.init(&token_id, &admin), Ok(()));
 }
@@ -1638,8 +1638,8 @@ fn init_rejects_non_sep41_token() {
 
     let admin = Address::generate(&env);
     let token_id = env.register_contract(None, NonConformingToken).address();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let init_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         client.init(&token_id, &admin)

@@ -271,7 +271,7 @@ pub struct ProposalExecuted {
 
 /// Emitted when the admin adds a new co-signer to the governance set.
 ///
-/// Published by [`add_signer`](FluxoraGovernance::add_signer) after the signer
+/// Published by [`add_signer`](WallieDeSenseiGovernance::add_signer) after the signer
 /// list has been persisted (CEI: state mutation precedes the event). Indexers
 /// use this to reconstruct the live co-signer set from chain events alone.
 #[contracttype]
@@ -283,7 +283,7 @@ pub struct SignerAdded {
 
 /// Emitted when the admin removes an existing co-signer from the governance set.
 ///
-/// Published by [`remove_signer`](FluxoraGovernance::remove_signer) only when a
+/// Published by [`remove_signer`](WallieDeSenseiGovernance::remove_signer) only when a
 /// matching address was actually removed and the updated signer list persisted.
 /// Removing an address that is not registered is a no-op and emits **no** event.
 #[contracttype]
@@ -297,8 +297,8 @@ pub struct SignerRemoved {
 /// whether the current threshold remains satisfiable and how close the
 /// membership is to dropping below the threshold.
 ///
-/// Published by [`add_signer`](FluxoraGovernance::add_signer) and
-/// [`remove_signer`](FluxoraGovernance::remove_signer) after the membership
+/// Published by [`add_signer`](WallieDeSenseiGovernance::add_signer) and
+/// [`remove_signer`](WallieDeSenseiGovernance::remove_signer) after the membership
 /// change is persisted.
 #[contracttype]
 #[derive(Clone, Debug)]
@@ -309,7 +309,7 @@ pub struct QuorumConfig {
 
 /// Emitted when the admin address is rotated.
 ///
-/// Published by [`set_admin`](FluxoraGovernance::set_admin) after the new admin
+/// Published by [`set_admin`](WallieDeSenseiGovernance::set_admin) after the new admin
 /// has been persisted (CEI: state mutation precedes the event). Carries both the
 /// previous and new admin so indexers can reconstruct the full admin history.
 #[contracttype]
@@ -468,10 +468,10 @@ fn save_proposal(env: &Env, id: u32, proposal: &Proposal) {
 // ---------------------------------------------------------------------------
 
 #[contract]
-pub struct FluxoraGovernance;
+pub struct WallieDeSenseiGovernance;
 
 #[contractimpl]
-impl FluxoraGovernance {
+impl WallieDeSenseiGovernance {
     /// Initialise the governance contract with an admin, a list of co-signers,
     /// and an approval threshold.
     ///
@@ -1158,7 +1158,7 @@ impl FluxoraGovernance {
 
     /// Return a bounded page of proposals whose IDs fall in `[start_id, start_id + limit)`.
     ///
-    /// This mirrors `FluxoraStream::get_streams_by_id_range` and is the primary
+    /// This mirrors `WallieDeSenseiStream::get_streams_by_id_range` and is the primary
     /// entrypoint for dashboard or migration tooling that needs to enumerate
     /// governance history without issuing one RPC per proposal.
     ///
@@ -1280,7 +1280,7 @@ mod tests {
         signer_b: Address,
         #[allow(dead_code)]
         signer_c: Address,
-        client: FluxoraGovernanceClient<'static>,
+        client: WallieDeSenseiGovernanceClient<'static>,
     }
 
     impl Ctx {
@@ -1289,13 +1289,13 @@ mod tests {
             env.mock_all_auths();
             env.ledger().set_timestamp(1_000_000);
 
-            let contract_id = env.register_contract(None, FluxoraGovernance);
+            let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
             let admin = Address::generate(&env);
             let signer_a = Address::generate(&env);
             let signer_b = Address::generate(&env);
             let signer_c = Address::generate(&env);
 
-            let client = FluxoraGovernanceClient::new(&env, &contract_id);
+            let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
             client.init(
                 &admin,
                 &vec![&env, signer_a.clone(), signer_b.clone(), signer_c.clone()],
@@ -1393,8 +1393,8 @@ mod tests {
     #[test]
     fn test_get_admin_pre_init() {
         let env = Env::default();
-        let contract_id = env.register_contract(None, FluxoraGovernance);
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         let result = client.try_get_admin();
         assert_eq!(result, Err(Ok(GovernanceError::NotInitialized)));
     }
@@ -1409,8 +1409,8 @@ mod tests {
     #[test]
     fn test_get_threshold_pre_init() {
         let env = Env::default();
-        let contract_id = env.register_contract(None, FluxoraGovernance);
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         let result = client.try_get_threshold();
         assert_eq!(result, Err(Ok(GovernanceError::NotInitialized)));
     }
@@ -1424,10 +1424,10 @@ mod tests {
         let env = Env::default();
         env.mock_all_auths();
         env.ledger().set_timestamp(1_000_000);
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
         let signer = Address::generate(&env);
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         let result = client.try_init(&admin, &vec![&env, signer], &0u32);
         assert_eq!(result, Err(Ok(GovernanceError::InvalidThreshold)));
     }
@@ -1437,11 +1437,11 @@ mod tests {
         let env = Env::default();
         env.mock_all_auths();
         env.ledger().set_timestamp(1_000_000);
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
         let signer_a = Address::generate(&env);
         let signer_b = Address::generate(&env);
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         // 2 signers but threshold = 3
         let result = client.try_init(&admin, &vec![&env, signer_a, signer_b], &3u32);
         assert_eq!(result, Err(Ok(GovernanceError::InvalidThreshold)));
@@ -1452,11 +1452,11 @@ mod tests {
         let env = Env::default();
         env.mock_all_auths();
         env.ledger().set_timestamp(1_000_000);
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
         let signer_a = Address::generate(&env);
         let signer_b = Address::generate(&env);
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         let result = client.try_init(&admin, &vec![&env, signer_a, signer_b], &2u32);
         assert!(result.is_ok());
         assert_eq!(client.quorum(), 2);
@@ -1467,10 +1467,10 @@ mod tests {
         let env = Env::default();
         env.mock_all_auths();
         env.ledger().set_timestamp(1_000_000);
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
         let signer = Address::generate(&env);
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         let result = client.try_init(&admin, &vec![&env, signer], &1u32);
         assert!(result.is_ok());
         assert_eq!(client.quorum(), 1);
@@ -2340,8 +2340,8 @@ mod tests {
         // Contract deployed but `init` never called. `is_signer` MUST return
         // `false` rather than panicking or returning an error.
         let env = Env::default();
-        let contract_id = env.register_contract(None, FluxoraGovernance);
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
 
         // Try several addresses, including a freshly generated one and the
         // zero address-equivalent pattern. None must panic, all must report
@@ -2361,9 +2361,9 @@ mod tests {
         let env = Env::default();
         env.mock_all_auths();
         env.ledger().set_timestamp(1_000_000);
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         // Note: `init` requires at least 1 signer, so we cannot exercise the
         // "post-init empty set" path directly. The pre-init path returns
         // `false` for every address — the strictest possible membership view.

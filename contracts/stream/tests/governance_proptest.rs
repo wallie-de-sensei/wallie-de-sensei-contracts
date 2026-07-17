@@ -1,4 +1,4 @@
-//! Property-based tests for the `FluxoraGovernance` contract.
+//! Property-based tests for the `WallieDeSenseiGovernance` contract.
 //!
 //! # Invariants under test
 //!
@@ -40,7 +40,7 @@
 
 extern crate std;
 
-use wallie_de_sensei_governance::{FluxoraGovernance, FluxoraGovernanceClient, GovernanceError};
+use wallie_de_sensei_governance::{WallieDeSenseiGovernance, WallieDeSenseiGovernanceClient, GovernanceError};
 use proptest::prelude::*;
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
@@ -77,7 +77,7 @@ struct GovEnv {
     env: Env,
     /// All registered co-signer addresses in declaration order.
     signers: std::vec::Vec<Address>,
-    client: FluxoraGovernanceClient<'static>,
+    client: WallieDeSenseiGovernanceClient<'static>,
 }
 
 impl GovEnv {
@@ -96,7 +96,7 @@ impl GovEnv {
         env.mock_all_auths();
         env.ledger().set_timestamp(BASE_TIMESTAMP);
 
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
 
         // Build the signer pool.
@@ -108,7 +108,7 @@ impl GovEnv {
             signers.push(addr);
         }
 
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         client.init(&admin, &sdk_signers, &threshold);
 
         GovEnv {

@@ -24,7 +24,7 @@
 
 extern crate std;
 
-use wallie_de_sensei_governance::{FluxoraGovernance, FluxoraGovernanceClient, GovernanceError};
+use wallie_de_sensei_governance::{WallieDeSenseiGovernance, WallieDeSenseiGovernanceClient, GovernanceError};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     vec, Address, Bytes, Env,
@@ -63,7 +63,7 @@ struct GovCtx<'a> {
     signer_b: Address,
     #[allow(dead_code)]
     signer_c: Address,
-    client: FluxoraGovernanceClient<'a>,
+    client: WallieDeSenseiGovernanceClient<'a>,
 }
 
 impl<'a> GovCtx<'a> {
@@ -72,14 +72,14 @@ impl<'a> GovCtx<'a> {
         env.mock_all_auths();
         env.ledger().set_timestamp(START_TIMESTAMP);
 
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
 
         let admin = Address::generate(&env);
         let signer_a = Address::generate(&env);
         let signer_b = Address::generate(&env);
         let signer_c = Address::generate(&env);
 
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         client.init(
             &admin,
             &vec![&env, signer_a.clone(), signer_b.clone(), signer_c.clone()],

@@ -20,7 +20,7 @@ use soroban_sdk::{
     Address, Env,
 };
 
-use crate::{FluxoraStream, FluxoraStreamClient, StreamStatus};
+use crate::{WallieDeSenseiStream, WallieDeSenseiStreamClient, StreamStatus};
 
 // ---------------------------------------------------------------------------
 // Minimal isolated test harness
@@ -38,7 +38,7 @@ impl PropCtx {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin)
@@ -48,7 +48,7 @@ impl PropCtx {
         let sender = Address::generate(&env);
         let recipient = Address::generate(&env);
 
-        FluxoraStreamClient::new(&env, &contract_id).init(&token_id, &admin);
+        WallieDeSenseiStreamClient::new(&env, &contract_id).init(&token_id, &admin);
         StellarAssetClient::new(&env, &token_id).mint(&sender, &deposit);
         soroban_sdk::token::Client::new(&env, &token_id).approve(
             &sender,
@@ -65,8 +65,8 @@ impl PropCtx {
         }
     }
 
-    fn client(&self) -> FluxoraStreamClient<'_> {
-        FluxoraStreamClient::new(&self.env, &self.client_id)
+    fn client(&self) -> WallieDeSenseiStreamClient<'_> {
+        WallieDeSenseiStreamClient::new(&self.env, &self.client_id)
     }
 }
 

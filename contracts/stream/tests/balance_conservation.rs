@@ -39,7 +39,7 @@
 extern crate std;
 
 use wallie_de_sensei_stream::{
-    ContractError, FluxoraStream, FluxoraStreamClient, PauseReason, StreamKind, StreamStatus,
+    ContractError, WallieDeSenseiStream, WallieDeSenseiStreamClient, PauseReason, StreamKind, StreamStatus,
 };
 use proptest::prelude::*;
 use soroban_sdk::{
@@ -71,7 +71,7 @@ impl TestContext {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env.register_stellar_asset_contract_v2(token_admin).address();
 
@@ -79,7 +79,7 @@ impl TestContext {
         let sender = Address::generate(&env);
         let recipient = Address::generate(&env);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         client.init(&token_id, &admin);
 
         // Fund both participants generously so that any generated sequence of
@@ -106,8 +106,8 @@ impl TestContext {
         }
     }
 
-    fn client(&self) -> FluxoraStreamClient<'_> {
-        FluxoraStreamClient::new(&self.env, &self.contract_id)
+    fn client(&self) -> WallieDeSenseiStreamClient<'_> {
+        WallieDeSenseiStreamClient::new(&self.env, &self.contract_id)
     }
 
     fn token(&self) -> TokenClient<'_> {

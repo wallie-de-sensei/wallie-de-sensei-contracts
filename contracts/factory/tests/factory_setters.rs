@@ -1,4 +1,4 @@
-//! Direct unit tests for `FluxoraFactory` admin setters and config views.
+//! Direct unit tests for `WallieDeSenseiFactory` admin setters and config views.
 //!
 //! Covers issue #684: `set_admin`, `set_cap`, `set_min_duration`, `set_allowlist`,
 //! `is_allowlisted`, and `get_factory_config` — including auth enforcement,
@@ -6,7 +6,7 @@
 
 #![cfg(test)]
 
-use wallie_de_sensei_factory::{load_policy, FactoryError, FactoryPolicy, FluxoraFactory, FluxoraFactoryClient};
+use wallie_de_sensei_factory::{load_policy, FactoryError, FactoryPolicy, WallieDeSenseiFactory, WallieDeSenseiFactoryClient};
 use soroban_sdk::{
     testutils::{Address as _, MockAuth, MockAuthInvoke},
     Address, Env, IntoVal,
@@ -22,8 +22,8 @@ use std::panic::AssertUnwindSafe;
 fn test_init_happy_path() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -41,8 +41,8 @@ fn test_init_happy_path() {
 fn test_init_double_returns_already_initialized() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -60,8 +60,8 @@ fn test_init_double_returns_already_initialized() {
 fn test_get_factory_config_before_init() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
 
     assert_eq!(
         factory.try_get_factory_config(),
@@ -74,8 +74,8 @@ fn test_get_factory_config_before_init() {
 fn test_setters_before_init_return_not_initialized() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let addr = Address::generate(&env);
 
     assert_eq!(
@@ -109,8 +109,8 @@ fn test_setters_before_init_return_not_initialized() {
 fn test_set_admin_updates_config() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
     factory.init(&admin, &sc, &10_000, &100);
@@ -125,8 +125,8 @@ fn test_set_admin_updates_config() {
 fn test_set_admin_new_admin_can_call_setters() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
     factory.init(&admin, &sc, &10_000, &100);
@@ -143,8 +143,8 @@ fn test_set_admin_new_admin_can_call_setters() {
 fn test_set_admin_same_address_noop() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
     factory.init(&admin, &sc, &10_000, &100);
@@ -162,8 +162,8 @@ fn test_set_admin_same_address_noop() {
 fn test_set_cap_round_trip() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
     factory.init(&admin, &sc, &10_000, &100);
@@ -181,8 +181,8 @@ fn test_set_cap_round_trip() {
 fn test_set_min_duration_round_trip() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
     factory.init(&admin, &sc, &10_000, &100);
@@ -200,8 +200,8 @@ fn test_set_min_duration_round_trip() {
 fn test_is_allowlisted_default_false() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
     factory.init(&admin, &sc, &10_000, &100);
@@ -215,8 +215,8 @@ fn test_is_allowlisted_default_false() {
 fn test_set_allowlist_add() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
     factory.init(&admin, &sc, &10_000, &100);
@@ -232,8 +232,8 @@ fn test_set_allowlist_add() {
 fn test_set_allowlist_remove() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
     factory.init(&admin, &sc, &10_000, &100);
@@ -249,8 +249,8 @@ fn test_set_allowlist_remove() {
 fn test_set_allowlist_remove_non_allowlisted_noop() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
     factory.init(&admin, &sc, &10_000, &100);
@@ -278,8 +278,8 @@ fn assert_auth_fails<F: FnOnce()>(f: F) {
 #[test]
 fn test_set_admin_rejects_non_admin() {
     let env = Env::default();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let non_admin = Address::generate(&env);
     let new_admin = Address::generate(&env);
@@ -304,8 +304,8 @@ fn test_set_admin_rejects_non_admin() {
 #[test]
 fn test_set_stream_contract_rejects_non_admin() {
     let env = Env::default();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let non_admin = Address::generate(&env);
     let sc = Address::generate(&env);
@@ -330,8 +330,8 @@ fn test_set_stream_contract_rejects_non_admin() {
 #[test]
 fn test_set_cap_rejects_non_admin() {
     let env = Env::default();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let non_admin = Address::generate(&env);
     let sc = Address::generate(&env);
@@ -355,8 +355,8 @@ fn test_set_cap_rejects_non_admin() {
 #[test]
 fn test_set_min_duration_rejects_non_admin() {
     let env = Env::default();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let non_admin = Address::generate(&env);
     let sc = Address::generate(&env);
@@ -380,8 +380,8 @@ fn test_set_min_duration_rejects_non_admin() {
 #[test]
 fn test_set_allowlist_rejects_non_admin() {
     let env = Env::default();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let non_admin = Address::generate(&env);
     let sc = Address::generate(&env);
@@ -415,8 +415,8 @@ fn test_set_allowlist_rejects_non_admin() {
 fn test_init_bumps_instance_ttl() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -448,8 +448,8 @@ fn test_init_bumps_instance_ttl() {
 fn test_setters_bump_instance_ttl() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -502,8 +502,8 @@ fn test_setters_bump_instance_ttl() {
 fn test_repeated_setter_calls_prevent_expiration() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -533,8 +533,8 @@ fn test_repeated_setter_calls_prevent_expiration() {
 fn test_idle_factory_recovers_on_first_setter() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -564,8 +564,8 @@ fn test_idle_factory_recovers_on_first_setter() {
 fn test_set_rate_bounds_bumps_instance_ttl() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -590,7 +590,7 @@ fn test_set_rate_bounds_bumps_instance_ttl() {
 fn test_load_policy_before_init_returns_not_initialized() {
     let env = Env::default();
     env.mock_all_auths();
-    let _fid = env.register_contract(None, FluxoraFactory);
+    let _fid = env.register_contract(None, WallieDeSenseiFactory);
 
     let result = load_policy(&env);
     assert_eq!(result, Err(FactoryError::NotInitialized));
@@ -603,8 +603,8 @@ fn test_load_policy_before_init_returns_not_initialized() {
 fn test_load_policy_reflects_initial_state() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -627,8 +627,8 @@ fn test_load_policy_reflects_initial_state() {
 fn test_load_policy_reflects_all_setters() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -662,8 +662,8 @@ fn test_load_policy_reflects_all_setters() {
 fn test_load_policy_defaults_rate_bounds_to_none() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -686,8 +686,8 @@ fn test_load_policy_defaults_rate_bounds_to_none() {
 fn test_load_policy_reflects_batch_cap_toggle() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -707,8 +707,8 @@ fn test_load_policy_reflects_batch_cap_toggle() {
 fn test_load_policy_reflects_pause_toggle() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 
@@ -729,8 +729,8 @@ fn test_load_policy_reflects_pause_toggle() {
 fn test_load_policy_equality_is_struct_equality() {
     let env = Env::default();
     env.mock_all_auths();
-    let fid = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &fid);
+    let fid = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &fid);
     let admin = Address::generate(&env);
     let sc = Address::generate(&env);
 

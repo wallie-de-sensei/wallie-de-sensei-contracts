@@ -11,7 +11,7 @@
 //! On failure the permutation seed is printed for reproducibility.
 
 use wallie_de_sensei_stream::{
-    ContractError, CreateStreamParams, FluxoraStream, FluxoraStreamClient, PauseReason,
+    ContractError, CreateStreamParams, WallieDeSenseiStream, WallieDeSenseiStreamClient, PauseReason,
     StreamStatus,
 };
 use proptest::prelude::*;
@@ -23,7 +23,7 @@ use soroban_sdk::{
 
 struct TestContext {
     env: Env,
-    client: FluxoraStreamClient<'static>,
+    client: WallieDeSenseiStreamClient<'static>,
     sender: Address,
     recipient: Address,
     token: TokenClient<'static>,
@@ -36,8 +36,8 @@ impl TestContext {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
         let token_admin = Address::generate(&env);
         let token_id = env

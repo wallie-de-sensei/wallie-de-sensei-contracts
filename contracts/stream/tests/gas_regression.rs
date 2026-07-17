@@ -1,9 +1,9 @@
-use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{WallieDeSenseiStream, WallieDeSenseiStreamClient};
 use soroban_sdk::{token::Client as TokenClient, Address, Env};
 
 struct TestContext<'a> {
     env: Env,
-    client: FluxoraStreamClient<'a>,
+    client: WallieDeSenseiStreamClient<'a>,
     sender: Address,
     token: TokenClient<'a>,
 }
@@ -13,8 +13,8 @@ impl<'a> TestContext<'a> {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
         let token_admin = Address::generate(&env);
         let token_id = env

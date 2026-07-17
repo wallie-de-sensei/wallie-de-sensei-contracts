@@ -1,7 +1,7 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
 
-use wallie_de_sensei_stream::{ContractError as StreamContractErr, FluxoraStreamClient, StreamKind};
+use wallie_de_sensei_stream::{ContractError as StreamContractErr, WallieDeSenseiStreamClient, StreamKind};
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, symbol_short, vec, Address, Bytes, Env,
     Vec,
@@ -49,9 +49,9 @@ pub enum FactoryError {
     InvalidCliff = 8,
     /// Factory stream creation is currently paused by admin.
     CreationPaused = 9,
-    /// The downstream FluxoraStream contract rejected creation because it is paused.
+    /// The downstream WallieDeSenseiStream contract rejected creation because it is paused.
     StreamContractPaused = 10,
-    /// The downstream FluxoraStream contract rejected creation for a reason other than paused.
+    /// The downstream WallieDeSenseiStream contract rejected creation for a reason other than paused.
     /// This is a passthrough catch-all for unexpected downstream failures.
     StreamContractError = 11,
     /// Rate per second is below the configured minimum.
@@ -66,8 +66,8 @@ pub enum FactoryError {
     /// The requested memo exceeds the allowed max length.
     InvalidMemo = 16,
     /// The supplied `stream_contract` address did not respond to the
-    /// `FluxoraStream::version()` smoke check (e.g. it is not a deployed
-    /// contract, or does not implement the `FluxoraStream` interface).
+    /// `WallieDeSenseiStream::version()` smoke check (e.g. it is not a deployed
+    /// contract, or does not implement the `WallieDeSenseiStream` interface).
     ///
     /// Returned by `init` and `set_stream_contract` instead of letting an
     /// invalid address be persisted and later host-trap inside `create_stream`.
@@ -106,21 +106,21 @@ fn require_admin(env: &Env) -> Result<Address, FactoryError> {
     Ok(admin)
 }
 
-/// Smoke-test a candidate stream contract for the `FluxoraStream` interface.
+/// Smoke-test a candidate stream contract for the `WallieDeSenseiStream` interface.
 ///
 /// This helper is called from `init` and `set_stream_contract` before the
 /// candidate address is persisted as the factory's `StreamContract`. It
 /// invokes the read-only, storage-free `version()` entrypoint via
-/// `FluxoraStreamClient::try_version`, which uses `Env::try_invoke_contract`
+/// `WallieDeSenseiStreamClient::try_version`, which uses `Env::try_invoke_contract`
 /// internally so a missing contract, an EOA address, or a contract that does
 /// not expose `version()` surfaces as a typed `FactoryError` instead of a
 /// host trap.
 ///
 /// `version()` is intentionally cheap to check: it performs no storage reads
-/// and works even on a `FluxoraStream` contract that has not yet been
+/// and works even on a `WallieDeSenseiStream` contract that has not yet been
 /// initialized, so it is safe to call during the factory's own bootstrap.
 fn validate_stream_contract(env: &Env, stream_contract: &Address) -> Result<(), FactoryError> {
-    let client = FluxoraStreamClient::new(env, stream_contract);
+    let client = WallieDeSenseiStreamClient::new(env, stream_contract);
     match client.try_version() {
         Ok(Ok(_)) => Ok(()),
         _ => Err(FactoryError::InvalidStreamContract),
@@ -265,7 +265,7 @@ pub struct FactoryConfig {
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FactoryPolicy {
-    /// Address of the downstream `FluxoraStream` contract that all
+    /// Address of the downstream `WallieDeSenseiStream` contract that all
     /// factory-routed creations are forwarded to.
     pub stream_contract: Address,
     /// Maximum per-stream deposit accepted by the factory.
@@ -306,7 +306,7 @@ pub struct FactoryPolicy {
 /// - `min_duration`
 /// - `batch_cap_enforced`
 ///
-/// These are written unconditionally by [`FluxoraFactory::init`], so a
+/// These are written unconditionally by [`WallieDeSenseiFactory::init`], so a
 /// well-formed initialized factory always satisfies them.
 pub fn load_policy(env: &Env) -> Result<FactoryPolicy, FactoryError> {
     let stream_contract: Address = env
@@ -366,7 +366,7 @@ pub struct FactoryInited {
 }
 
 /// Emitted when the factory admin is rotated (`AdminUpd`).
-/// Mirrors the `AdminUpd` topic used in `FluxoraStream::set_admin`.
+/// Mirrors the `AdminUpd` topic used in `WallieDeSenseiStream::set_admin`.
 #[contracttype]
 #[derive(Clone, Debug)]
 pub struct FactoryAdminUpdated {
@@ -428,11 +428,11 @@ pub struct FactoryStreamCreated {
 }
 
 #[contract]
-pub struct FluxoraFactory;
+pub struct WallieDeSenseiFactory;
 
 #[contractimpl]
 #[allow(clippy::too_many_arguments)]
-impl FluxoraFactory {
+impl WallieDeSenseiFactory {
     /// Initialize the factory with admin, stream contract, and policies.
     ///
     /// # Authorization
@@ -444,7 +444,7 @@ impl FluxoraFactory {
     /// admin address they do not control.
     ///
     /// # Validation
-    /// `stream_contract` must pass the `FluxoraStream` smoke check (see
+    /// `stream_contract` must pass the `WallieDeSenseiStream` smoke check (see
     /// [`validate_stream_contract`]) before it is persisted. This converts a
     /// misconfigured stream address from a deferred host trap inside
     /// `create_stream` into an immediate `FactoryError::InvalidStreamContract`
@@ -458,7 +458,7 @@ impl FluxoraFactory {
     /// # Errors
     /// - `FactoryError::AlreadyInitialized` if `init` has already succeeded.
     /// - `FactoryError::InvalidStreamContract` if `stream_contract` does not
-    ///   respond to `FluxoraStream::version()`.
+    ///   respond to `WallieDeSenseiStream::version()`.
     pub fn init(
         env: Env,
         admin: Address,
@@ -526,9 +526,9 @@ impl FluxoraFactory {
     /// Admin updates the stream contract address.
     ///
     /// # Validation
-    /// `new_stream_contract` must pass the same `FluxoraStream` smoke check
+    /// `new_stream_contract` must pass the same `WallieDeSenseiStream` smoke check
     /// applied in `init` (see [`validate_stream_contract`]), so a later swap
-    /// cannot silently install a non-`FluxoraStream` address. On failure the
+    /// cannot silently install a non-`WallieDeSenseiStream` address. On failure the
     /// previously configured `stream_contract` is left untouched.
     pub fn set_stream_contract(env: Env, new_stream_contract: Address) -> Result<(), FactoryError> {
         require_admin(&env)?;
@@ -818,7 +818,7 @@ impl FluxoraFactory {
         page
     }
 
-    /// Creates a new stream via the FluxoraStream contract after enforcing treasury policies.
+    /// Creates a new stream via the WallieDeSenseiStream contract after enforcing treasury policies.
     ///
     /// # Parameters
     /// - `stream_kind`: [`StreamKind::Linear`] for a standard vesting stream or
@@ -883,7 +883,7 @@ impl FluxoraFactory {
         }
 
         // ── Guard 5: time invariants ─────────────────────────────────────────
-        // Mirror FluxoraStream time invariants before the cross-contract call so
+        // Mirror WallieDeSenseiStream time invariants before the cross-contract call so
         // invalid schedules return typed factory errors instead of downstream panics.
         if start_time >= end_time {
             return Err(FactoryError::InvalidTimeRange);
@@ -928,13 +928,13 @@ impl FluxoraFactory {
             }
         }
 
-        // Must authenticate the sender because the factory calls FluxoraStream with this sender.
+        // Must authenticate the sender because the factory calls WallieDeSenseiStream with this sender.
         // The sender needs to authorize both this wrapper invocation and the cross-contract invocation.
         sender.require_auth();
 
         // ── Interaction ──────────────────────────────────────────────────────
         let stream_contract = policy.stream_contract;
-        let stream_client = FluxoraStreamClient::new(&env, &stream_contract);
+        let stream_client = WallieDeSenseiStreamClient::new(&env, &stream_contract);
 
         match stream_client.try_create_stream(
             &sender,
@@ -1069,7 +1069,7 @@ impl FluxoraFactory {
             return Ok(Vec::new(&env));
         }
 
-        let stream_client = FluxoraStreamClient::new(&env, &stream_contract);
+        let stream_client = WallieDeSenseiStreamClient::new(&env, &stream_contract);
         let mut wrapped_streams = Vec::new(&env);
         for params in streams.iter() {
             wrapped_streams.push_back(params.clone());

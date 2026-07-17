@@ -23,9 +23,9 @@
 extern crate std;
 
 use wallie_de_sensei_governance::{
-    CallData, FluxoraGovernance, FluxoraGovernanceClient, GovernanceError, ProposalExecuted,
+    CallData, WallieDeSenseiGovernance, WallieDeSenseiGovernanceClient, GovernanceError, ProposalExecuted,
 };
-use wallie_de_sensei_stream::{DataKey, FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{DataKey, WallieDeSenseiStream, WallieDeSenseiStreamClient};
 use soroban_sdk::{
     symbol_short,
     testutils::{Address as _, Events, Ledger},
@@ -68,7 +68,7 @@ impl ExecutorStub {
 
         match op {
             CallData::StreamSetMaxRate(max_rate) => {
-                let stream_client = FluxoraStreamClient::new(env, &executed.target);
+                let stream_client = WallieDeSenseiStreamClient::new(env, &executed.target);
                 stream_client.set_max_rate_per_second(&max_rate);
             }
             _ => {
@@ -135,8 +135,8 @@ struct E2EContext {
     signer_a: Address,
     signer_b: Address,
     signer_c: Address,
-    gov_client: FluxoraGovernanceClient<'static>,
-    stream_client: FluxoraStreamClient<'static>,
+    gov_client: WallieDeSenseiGovernanceClient<'static>,
+    stream_client: WallieDeSenseiStreamClient<'static>,
 }
 
 impl E2EContext {
@@ -146,13 +146,13 @@ impl E2EContext {
         env.ledger().set_timestamp(BASE_TIMESTAMP);
 
         // ---- Deploy governance ----
-        let governance_id = env.register_contract(None, FluxoraGovernance);
+        let governance_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
         let signer_a = Address::generate(&env);
         let signer_b = Address::generate(&env);
         let signer_c = Address::generate(&env);
 
-        let gov_client = FluxoraGovernanceClient::new(&env, &governance_id);
+        let gov_client = WallieDeSenseiGovernanceClient::new(&env, &governance_id);
         gov_client.init(
             &admin,
             &vec![&env, signer_a.clone(), signer_b.clone(), signer_c.clone()],
@@ -160,14 +160,14 @@ impl E2EContext {
         );
 
         // ---- Deploy stream contract ----
-        let stream_id = env.register_contract(None, FluxoraStream);
+        let stream_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin)
             .address();
         let token_asset = StellarAssetClient::new(&env, &token_id);
 
-        let stream_client = FluxoraStreamClient::new(&env, &stream_id);
+        let stream_client = WallieDeSenseiStreamClient::new(&env, &stream_id);
         // The stream's admin is set to the governance contract, so the
         // governance contract can successfully call set_max_rate_per_second
         // via dispatch_call during execute.

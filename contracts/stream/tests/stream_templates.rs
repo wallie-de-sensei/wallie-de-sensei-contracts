@@ -1,6 +1,6 @@
 extern crate std;
 
-    ContractError, DataKey, FluxoraStream, FluxoraStreamClient, StreamScheduleTemplate,
+    ContractError, DataKey, WallieDeSenseiStream, WallieDeSenseiStreamClient, StreamScheduleTemplate,
     MAX_GLOBAL_TEMPLATES, MAX_TEMPLATES_PER_OWNER, StreamKind,
 };
 use soroban_sdk::{
@@ -14,7 +14,7 @@ fn template_register_create_delete_happy_path() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -24,7 +24,7 @@ fn template_register_create_delete_happy_path() {
     let sender = Address::generate(&env);
     let recipient = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     let sac = StellarAssetClient::new(&env, &token_id);
@@ -67,7 +67,7 @@ fn delete_template_rejects_wrong_owner() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -76,7 +76,7 @@ fn delete_template_rejects_wrong_owner() {
     let owner = Address::generate(&env);
     let other = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     env.ledger().set_timestamp(1_000_000);
@@ -91,7 +91,7 @@ fn per_owner_template_cap_enforced() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -99,7 +99,7 @@ fn per_owner_template_cap_enforced() {
     let admin = Address::generate(&env);
     let owner = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
     env.ledger().set_timestamp(2_000_000);
 
@@ -116,7 +116,7 @@ fn template_id_monotonic_distinct() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -125,7 +125,7 @@ fn template_id_monotonic_distinct() {
     let a = Address::generate(&env);
     let b = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
     env.ledger().set_timestamp(3_000_000);
 
@@ -143,7 +143,7 @@ fn test_owner_template_cap_exceeded() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -151,7 +151,7 @@ fn test_owner_template_cap_exceeded() {
     let admin = Address::generate(&env);
     let owner = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
     env.ledger().set_timestamp(1_000_000);
 
@@ -184,7 +184,7 @@ fn test_global_template_cap_exceeded() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -192,7 +192,7 @@ fn test_global_template_cap_exceeded() {
     let admin = Address::generate(&env);
     let owner = Address::generate(&env);
 
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
     env.ledger().set_timestamp(2_000_000);
 

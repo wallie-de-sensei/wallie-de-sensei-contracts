@@ -1,4 +1,4 @@
-use wallie_de_sensei_governance::{FluxoraGovernance, FluxoraGovernanceClient};
+use wallie_de_sensei_governance::{WallieDeSenseiGovernance, WallieDeSenseiGovernanceClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     Address, Bytes, Env, Vec,
@@ -6,7 +6,7 @@ use soroban_sdk::{
 // contracts/governance/tests/gas_regression.rs
 #![cfg(test)]
 
-use wallie_de_sensei_governance::{FluxoraGovernance, FluxoraGovernanceClient, GovernanceError};
+use wallie_de_sensei_governance::{WallieDeSenseiGovernance, WallieDeSenseiGovernanceClient, GovernanceError};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     vec, Address, Bytes, Env, Vec,
@@ -37,7 +37,7 @@ const MAX_MEM_EXECUTE_PER_KB: u64 = 125_000;
 /// We use this across all the gas tests to keep things consistent.
 struct GovGasCtx<'a> {
     env: Env,
-    client: FluxoraGovernanceClient<'a>,
+    client: WallieDeSenseiGovernanceClient<'a>,
     signers: Vec<Address>,
     target: Address,
     admin: Address,
@@ -49,8 +49,8 @@ impl<'a> GovGasCtx<'a> {
         env.mock_all_auths();
         env.ledger().set_timestamp(1_000_000);
 
-        let contract_id = env.register_contract(None, FluxoraGovernance);
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
 
         let admin = Address::generate(&env);
         let mut signers: Vec<Address> = Vec::new(&env);

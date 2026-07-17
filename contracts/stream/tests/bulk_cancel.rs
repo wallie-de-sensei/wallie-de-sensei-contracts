@@ -6,15 +6,15 @@ use soroban_sdk::{
 };
 
 use crate::{
-    accrual, Config, ContractError, DataKey, FluxoraStream, FluxoraStreamClient, StreamStatus,
+    accrual, Config, ContractError, DataKey, WallieDeSenseiStream, WallieDeSenseiStreamClient, StreamStatus,
 };
 
 // ── Test helpers ───────────────────────────────────────────────────────────
 
-fn setup_env() -> (Env, FluxoraStreamClient<'static>, Address, Address, Address) {
+fn setup_env() -> (Env, WallieDeSenseiStreamClient<'static>, Address, Address, Address) {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
     let token = Address::generate(&env);
@@ -29,7 +29,7 @@ fn setup_env() -> (Env, FluxoraStreamClient<'static>, Address, Address, Address)
 
 fn create_test_stream(
     env: &Env,
-    client: &FluxoraStreamClient,
+    client: &WallieDeSenseiStreamClient,
     sender: &Address,
     recipient: &Address,
     deposit: i128,

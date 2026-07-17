@@ -1,5 +1,5 @@
 use wallie_de_sensei_stream::{
-    ContractError, DataKey, FluxoraStream, FluxoraStreamClient, PauseReason, StreamKind,
+    ContractError, DataKey, WallieDeSenseiStream, WallieDeSenseiStreamClient, PauseReason, StreamKind,
     StreamStatus,
 };
 use soroban_sdk::{
@@ -11,7 +11,7 @@ use soroban_sdk::{
 struct Ctx<'a> {
     env: Env,
     contract_id: Address,
-    client: FluxoraStreamClient<'a>,
+    client: WallieDeSenseiStreamClient<'a>,
     admin: Address,
     sender: Address,
     recipient: Address,
@@ -24,8 +24,8 @@ impl<'a> Ctx<'a> {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
         let token_admin = Address::generate(&env);
         let token_id = env

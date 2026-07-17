@@ -13,8 +13,8 @@ extern crate std;
 // - Boundary values at exactly MAX_METADATA_KEYS / MAX_METADATA_BYTES limits
 
 use wallie_de_sensei_stream::{
-    ContractError, CreateStreamParams, CreateStreamRelativeParams, FluxoraStream,
-    FluxoraStreamClient, StreamStatus, MAX_METADATA_BYTES, MAX_METADATA_KEYS,
+    ContractError, CreateStreamParams, CreateStreamRelativeParams, WallieDeSenseiStream,
+    WallieDeSenseiStreamClient, StreamStatus, MAX_METADATA_BYTES, MAX_METADATA_KEYS,
     MAX_METADATA_KEY_BYTES, MAX_METADATA_VALUE_BYTES,
 };
 use soroban_sdk::{
@@ -40,7 +40,7 @@ impl<'a> Ctx<'a> {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin)
@@ -50,7 +50,7 @@ impl<'a> Ctx<'a> {
         let sender = Address::generate(&env);
         let recipient = Address::generate(&env);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         client.init(&token_id, &admin);
 
         let sac = StellarAssetClient::new(&env, &token_id);
@@ -70,8 +70,8 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    fn client(&self) -> FluxoraStreamClient<'_> {
-        FluxoraStreamClient::new(&self.env, &self.contract_id)
+    fn client(&self) -> WallieDeSenseiStreamClient<'_> {
+        WallieDeSenseiStreamClient::new(&self.env, &self.contract_id)
     }
 
     fn make_key(&self, s: &str) -> Bytes {

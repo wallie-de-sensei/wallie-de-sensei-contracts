@@ -1,7 +1,7 @@
 // contracts/stream/tests/upgrade_path.rs
 #![cfg(test)]
 
-use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{WallieDeSenseiStream, WallieDeSenseiStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     vec, Address, BytesN, Env,
@@ -10,7 +10,7 @@ use soroban_sdk::{
 /// Test context for upgrade tests
 struct UpgradeTestCtx<'a> {
     env: Env,
-    client: FluxoraStreamClient<'a>,
+    client: WallieDeSenseiStreamClient<'a>,
     admin: Address,
     token: Address,
     sender: Address,
@@ -23,8 +23,8 @@ impl<'a> UpgradeTestCtx<'a> {
         env.mock_all_auths();
         env.ledger().set_timestamp(1_000_000);
 
-        let contract_id = env.register_contract(None, FluxoraStream);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
         let token_admin = Address::generate(&env);
         let token = env
@@ -163,8 +163,8 @@ fn test_upgrade_fails_if_not_initialized() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
     let new_hash = BytesN::from_array(&env, &[0u8; 32]);

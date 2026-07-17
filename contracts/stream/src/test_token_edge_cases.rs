@@ -26,7 +26,7 @@ use soroban_sdk::{
 };
 
 use crate::{
-    ContractError, CreateStreamParams, FluxoraStream, FluxoraStreamClient, StreamCreated,
+    ContractError, CreateStreamParams, WallieDeSenseiStream, WallieDeSenseiStreamClient, StreamCreated,
     StreamEvent, StreamStatus, WithdrawalTo,
     test::TestContext,
 };
@@ -799,8 +799,8 @@ fn test_token_check_init_fails_for_negative_balance_token() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let token_id = env.register_contract(None, MockNegativeBalanceToken);
     let admin = Address::generate(&env);
@@ -815,8 +815,8 @@ fn test_token_check_init_fails_for_mutating_balance_token() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let token_id = env.register_contract(None, MockMutatingToken);
     let admin = Address::generate(&env);

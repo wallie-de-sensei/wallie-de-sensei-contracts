@@ -4,7 +4,7 @@
 
 extern crate std;
 
-use wallie_de_sensei_stream::{ContractError, FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{ContractError, WallieDeSenseiStream, WallieDeSenseiStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, MockAuth, MockAuthInvoke},
     token::{Client as TokenClient, StellarAssetClient},
@@ -22,7 +22,7 @@ impl<'a> Ctx<'a> {
     fn setup() -> Self {
         let env = Env::default();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin.clone())
@@ -32,7 +32,7 @@ impl<'a> Ctx<'a> {
         let sender = Address::generate(&env);
         let recipient = Address::generate(&env);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
         env.mock_auths(&[MockAuth {
             address: &admin,
@@ -76,8 +76,8 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    fn client(&self) -> FluxoraStreamClient<'_> {
-        FluxoraStreamClient::new(&self.env, &self.contract_id)
+    fn client(&self) -> WallieDeSenseiStreamClient<'_> {
+        WallieDeSenseiStreamClient::new(&self.env, &self.contract_id)
     }
 
     fn create_stream(&self) -> u64 {

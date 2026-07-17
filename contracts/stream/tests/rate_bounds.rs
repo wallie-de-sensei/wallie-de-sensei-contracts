@@ -1,10 +1,10 @@
-use wallie_de_sensei_stream::{ContractError, FluxoraStream, StreamStatus, StreamKind};
+use wallie_de_sensei_stream::{ContractError, WallieDeSenseiStream, StreamStatus, StreamKind};
 use soroban_sdk::{testutils::Address as _, Address, Env, String};
 
-fn setup() -> (Env, FluxoraStreamClient, Address, Address, Address) {
+fn setup() -> (Env, WallieDeSenseiStreamClient, Address, Address, Address) {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
     let token = Address::generate(&env);
@@ -24,7 +24,7 @@ fn setup() -> (Env, FluxoraStreamClient, Address, Address, Address) {
 /// Helper to create a valid stream with a given rate_per_second.
 fn create_stream_with_rate(
     env: &Env,
-    client: &FluxoraStreamClient,
+    client: &WallieDeSenseiStreamClient,
     sender: &Address,
     recipient: &Address,
     rate_per_second: i128,

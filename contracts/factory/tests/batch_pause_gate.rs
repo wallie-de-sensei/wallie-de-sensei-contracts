@@ -2,8 +2,8 @@
 
 extern crate std;
 
-use wallie_de_sensei_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
-use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_factory::{FactoryError, WallieDeSenseiFactory, WallieDeSenseiFactoryClient};
+use wallie_de_sensei_stream::{WallieDeSenseiStream, WallieDeSenseiStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token::{Client as TokenClient, StellarAssetClient},
@@ -20,7 +20,7 @@ const LEDGER_TIMESTAMP: u64 = 1_000_000_000;
 
 struct Ctx<'a> {
     env: Env,
-    factory: FluxoraFactoryClient<'a>,
+    factory: WallieDeSenseiFactoryClient<'a>,
     sender: Address,
     recipient: Address,
 }
@@ -31,11 +31,11 @@ impl<'a> Ctx<'a> {
         env.mock_all_auths();
         env.ledger().set_timestamp(LEDGER_TIMESTAMP);
 
-        let stream_contract_id = env.register_contract(None, FluxoraStream);
-        let factory_contract_id = env.register_contract(None, FluxoraFactory);
+        let stream_contract_id = env.register_contract(None, WallieDeSenseiStream);
+        let factory_contract_id = env.register_contract(None, WallieDeSenseiFactory);
 
-        let stream = FluxoraStreamClient::new(&env, &stream_contract_id);
-        let factory = FluxoraFactoryClient::new(&env, &factory_contract_id);
+        let stream = WallieDeSenseiStreamClient::new(&env, &stream_contract_id);
+        let factory = WallieDeSenseiFactoryClient::new(&env, &factory_contract_id);
 
         let token_admin = Address::generate(&env);
         let token_id = env

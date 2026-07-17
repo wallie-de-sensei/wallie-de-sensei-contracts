@@ -1875,11 +1875,11 @@ impl WallieDeSenseiStream {
 
 #[contract]
 
-pub struct FluxoraStream;
+pub struct WallieDeSenseiStream;
 
 #[allow(clippy::too_many_arguments)]
 #[contractimpl]
-impl FluxoraStream {
+impl WallieDeSenseiStream {
     /// Initialise the contract with the streaming token and admin address.
     ///
     /// This function must be called exactly once before any other contract operations.
@@ -3124,8 +3124,8 @@ impl FluxoraStream {
     /// Rotate the receiving address for a stream (propose step).
     ///
     /// Stores a pending recipient update that must be accepted by the current
-    /// recipient via [`accept_recipient_update`](FluxoraStream::accept_recipient_update)
-    /// or cancelled by the sender via [`cancel_recipient_update`](FluxoraStream::cancel_recipient_update).
+    /// recipient via [`accept_recipient_update`](WallieDeSenseiStream::accept_recipient_update)
+    /// or cancelled by the sender via [`cancel_recipient_update`](WallieDeSenseiStream::cancel_recipient_update).
     ///
     /// # Parameters
     /// - `stream_id`: Unique identifier of the stream to update.
@@ -6910,7 +6910,7 @@ pub struct ContractUpgraded {
     pub upgraded_by: Address,
 }
 
-// Add to the contract impl block (FluxoraStream)
+// Add to the contract impl block (WallieDeSenseiStream)
 
 /// Upgrade the contract WASM to a new version.
 ///
@@ -7103,7 +7103,7 @@ pub fn bulk_cancel_streams(
             return Err(ContractError::Unauthorized);
         }
 
-        FluxoraStream::require_cancellable_status(stream.status)?;
+        WallieDeSenseiStream::require_cancellable_status(stream.status)?;
 
         streams.push_back(stream);
     }

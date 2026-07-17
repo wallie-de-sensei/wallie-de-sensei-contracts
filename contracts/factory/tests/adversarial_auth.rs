@@ -1,8 +1,8 @@
-//! Adversarial authorization tests for `FluxoraFactory::create_stream`.
+//! Adversarial authorization tests for `WallieDeSenseiFactory::create_stream`.
 //!
 //! Issue #647 — The factory's `create_stream` holds a dual-authorization
 //! requirement: the sender must authorize both the outer factory invocation
-//! **and** the inner `FluxoraStream::create_stream` cross-contract
+//! **and** the inner `WallieDeSenseiStream::create_stream` cross-contract
 //! sub-invocation. These tests assert that:
 //!
 //! 1. A call with **no** sender auth fails (missing top-level auth).
@@ -15,8 +15,8 @@
 
 extern crate std;
 
-use wallie_de_sensei_factory::{FluxoraFactory, FluxoraFactoryClient};
-use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_factory::{WallieDeSenseiFactory, WallieDeSenseiFactoryClient};
+use wallie_de_sensei_stream::{WallieDeSenseiStream, WallieDeSenseiStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger, MockAuth, MockAuthInvoke},
     token::{StellarAssetClient, Client as TokenClient},
@@ -41,8 +41,8 @@ const NOW: u64 = 1_000_000_000;
 
 struct Ctx {
     env: Env,
-    factory: FluxoraFactoryClient,
-    stream: FluxoraStreamClient,
+    factory: WallieDeSenseiFactoryClient,
+    stream: WallieDeSenseiStreamClient,
     sender: Address,
     recipient: Address,
     factory_id: Address,
@@ -54,11 +54,11 @@ impl Ctx {
         let env = Env::default();
         env.ledger().set_timestamp(NOW);
 
-        let stream_id = env.register_contract(None, FluxoraStream);
-        let factory_id = env.register_contract(None, FluxoraFactory);
+        let stream_id = env.register_contract(None, WallieDeSenseiStream);
+        let factory_id = env.register_contract(None, WallieDeSenseiFactory);
 
-        let stream = FluxoraStreamClient::new(&env, &stream_id);
-        let factory = FluxoraFactoryClient::new(&env, &factory_id);
+        let stream = WallieDeSenseiStreamClient::new(&env, &stream_id);
+        let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
 
         let token_admin = Address::generate(&env);
         let token_addr = env

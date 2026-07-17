@@ -1,10 +1,10 @@
-//! End-to-end integration test: `FluxoraFactory::create_stream` → `FluxoraStream::create_stream`.
+//! End-to-end integration test: `WallieDeSenseiFactory::create_stream` → `WallieDeSenseiStream::create_stream`.
 //!
 //! Deployment topology:
 //!
 //! ```text
 //! ┌──────────────────┐     cross-contract      ┌──────────────────┐
-//! │ FluxoraFactory    │ ──────────────────────→ │ FluxoraStream     │
+//! │ WallieDeSenseiFactory    │ ──────────────────────→ │ WallieDeSenseiStream     │
 //! │                  │   create_stream         │                  │
 //! │ policy checks   │   (sender auth × 2)     │ token transfer   │
 //! │ (allowlist,     │                          │ persist stream   │
@@ -17,15 +17,15 @@
 //!   └───────────────────────────────────────────────────────┘
 //! ```
 //!
-//! Every test registers **real** `FluxoraFactory`, `FluxoraStream`, and SAC token
+//! Every test registers **real** `WallieDeSenseiFactory`, `WallieDeSenseiStream`, and SAC token
 //! contracts in a single `Env` so that the cross-contract wiring — sender dual-auth,
 //! token funding, returned `stream_id`, and recipient-index updates — is genuinely
 //! exercised (no mocks at the contract boundary).
 
 extern crate std;
 
-use wallie_de_sensei_factory::{FactoryError, FluxoraFactory, FluxoraFactoryClient};
-use wallie_de_sensei_stream::{CreateStreamParams, FluxoraStream, FluxoraStreamClient, StreamKind};
+use wallie_de_sensei_factory::{FactoryError, WallieDeSenseiFactory, WallieDeSenseiFactoryClient};
+use wallie_de_sensei_stream::{CreateStreamParams, WallieDeSenseiStream, WallieDeSenseiStreamClient, StreamKind};
 use soroban_sdk::{
     testutils::{Address as _, Ledger, Events},
     token::{Client as TokenClient, StellarAssetClient},
@@ -45,11 +45,11 @@ const SENDER_FUNDING: i128 = 1_000_000_000;
 const LEDGER_TIMESTAMP: u64 = 1_000_000_000;
 
 struct FactoryClientWrapper<'a> {
-    client: FluxoraFactoryClient<'a>,
+    client: WallieDeSenseiFactoryClient<'a>,
 }
 
 impl<'a> FactoryClientWrapper<'a> {
-    fn new(client: FluxoraFactoryClient<'a>) -> Self {
+    fn new(client: WallieDeSenseiFactoryClient<'a>) -> Self {
         Self { client }
     }
 
@@ -154,11 +154,11 @@ impl<'a> FactoryClientWrapper<'a> {
 
 struct Ctx<'a> {
     env: Env,
-    factory: FluxoraFactoryClient<'a>,
-    stream: FluxoraStreamClient<'a>,
+    factory: WallieDeSenseiFactoryClient<'a>,
+    stream: WallieDeSenseiStreamClient<'a>,
     #[expect(dead_code)]
     factory: FactoryClientWrapper<'a>,
-    stream: FluxoraStreamClient<'a>,
+    stream: WallieDeSenseiStreamClient<'a>,
     admin: Address,
     sender: Address,
     recipient: Address,
@@ -177,11 +177,11 @@ impl<'a> Ctx<'a> {
         env.mock_all_auths();
         env.ledger().set_timestamp(LEDGER_TIMESTAMP);
 
-        let stream_contract_id = env.register_contract(None, FluxoraStream);
-        let factory_contract_id = env.register_contract(None, FluxoraFactory);
+        let stream_contract_id = env.register_contract(None, WallieDeSenseiStream);
+        let factory_contract_id = env.register_contract(None, WallieDeSenseiFactory);
 
-        let stream = FluxoraStreamClient::new(&env, &stream_contract_id);
-        let factory = FluxoraFactoryClient::new(&env, &factory_contract_id);
+        let stream = WallieDeSenseiStreamClient::new(&env, &stream_contract_id);
+        let factory = WallieDeSenseiFactoryClient::new(&env, &factory_contract_id);
 
         let token_admin = Address::generate(&env);
         let token_id = env
@@ -572,11 +572,11 @@ fn test_create_stream_cliff_at_end() {
 fn test_create_stream_requires_sender_auth() {
     let env = Env::default();
     // Deliberately NOT calling mock_all_auths — we want `require_auth` to fail.
-    let stream_id = env.register_contract(None, FluxoraStream);
-    let factory_id = env.register_contract(None, FluxoraFactory);
+    let stream_id = env.register_contract(None, WallieDeSenseiStream);
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
 
-    let stream = FluxoraStreamClient::new(&env, &stream_id);
-    let factory = FactoryClientWrapper::new(FluxoraFactoryClient::new(&env, &factory_id));
+    let stream = WallieDeSenseiStreamClient::new(&env, &stream_id);
+    let factory = FactoryClientWrapper::new(WallieDeSenseiFactoryClient::new(&env, &factory_id));
 
     let token_admin = Address::generate(&env);
     let token = env
@@ -721,8 +721,8 @@ fn test_create_streams_different_recipients() {
 fn test_create_stream_factory_not_initialized_returns_not_initialized() {
     let env = Env::default();
     env.mock_all_auths();
-    let factory_id = env.register_contract(None, FluxoraFactory);
-    let factory = FactoryClientWrapper::new(FluxoraFactoryClient::new(&env, &factory_id));
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = FactoryClientWrapper::new(WallieDeSenseiFactoryClient::new(&env, &factory_id));
     let now = env.ledger().timestamp();
 
     // No init called. Guard order in create_stream hits allowlist before cap/NotInitialized,

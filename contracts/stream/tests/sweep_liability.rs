@@ -2,7 +2,7 @@
 
 extern crate std;
 
-use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient};
+use wallie_de_sensei_stream::{WallieDeSenseiStream, WallieDeSenseiStreamClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token::{Client as TokenClient, StellarAssetClient},
@@ -28,7 +28,7 @@ impl<'a> Ctx<'a> {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin)
@@ -39,7 +39,7 @@ impl<'a> Ctx<'a> {
         let recipient = Address::generate(&env);
         let keeper = Address::generate(&env);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         client.init(&token_id, &admin);
 
         let sac = StellarAssetClient::new(&env, &token_id);
@@ -60,8 +60,8 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    fn client(&self) -> FluxoraStreamClient<'a> {
-        FluxoraStreamClient::new(&self.env, &self.contract_id)
+    fn client(&self) -> WallieDeSenseiStreamClient<'a> {
+        WallieDeSenseiStreamClient::new(&self.env, &self.contract_id)
     }
 }
 

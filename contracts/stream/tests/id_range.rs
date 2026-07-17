@@ -1,4 +1,4 @@
-//! Integration tests for `FluxoraStream::get_streams_by_id_range` edge cases.
+//! Integration tests for `WallieDeSenseiStream::get_streams_by_id_range` edge cases.
 //!
 //! Enforces:
 //! - Holey ranges containing closed or never-created IDs skip missing IDs.
@@ -10,7 +10,7 @@
 
 extern crate std;
 
-use wallie_de_sensei_stream::{FluxoraStream, FluxoraStreamClient, StreamKind, MAX_PAGE_SIZE};
+use wallie_de_sensei_stream::{WallieDeSenseiStream, WallieDeSenseiStreamClient, StreamKind, MAX_PAGE_SIZE};
 use soroban_sdk::{
     testutils::Address as _,
     token::{Client as TokenClient, StellarAssetClient},
@@ -23,7 +23,7 @@ use soroban_sdk::{
 
 struct Ctx {
     env: Env,
-    client: FluxoraStreamClient<'static>,
+    client: WallieDeSenseiStreamClient<'static>,
     sender: Address,
     recipient: Address,
 }
@@ -44,8 +44,8 @@ impl Ctx {
         let recipient = Address::generate(&env);
         StellarAssetClient::new(&env, &token_id).mint(&sender, &1_000_000_000_000);
 
-        let contract_id = env.register_contract(None, FluxoraStream);
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
         let admin = Address::generate(&env);
         client.init(&token_id, &admin);
@@ -58,7 +58,7 @@ impl Ctx {
         );
 
         // Safety: env lives as long as the returned Ctx; we only hold one Ctx at a time.
-        let client: FluxoraStreamClient<'static> = unsafe { core::mem::transmute(client) };
+        let client: WallieDeSenseiStreamClient<'static> = unsafe { core::mem::transmute(client) };
 
         Ctx { env, client, sender, recipient }
     }

@@ -4,9 +4,9 @@
 //! correctly delegates to the stream contract after passing all checks.
 
 use wallie_de_sensei_factory::{
-    FactoryError, FluxoraFactory, FluxoraFactoryClient, MAX_MIN_DURATION_SECONDS,
+    FactoryError, WallieDeSenseiFactory, WallieDeSenseiFactoryClient, MAX_MIN_DURATION_SECONDS,
 };
-use wallie_de_sensei_stream::{CreateStreamParams, FluxoraStream, FluxoraStreamClient, StreamKind};
+use wallie_de_sensei_stream::{CreateStreamParams, WallieDeSenseiStream, WallieDeSenseiStreamClient, StreamKind};
 use soroban_sdk::{
     testutils::{Address as _, MockAuth, MockAuthInvoke},
     token::{Client as TokenClient, StellarAssetClient},
@@ -16,9 +16,9 @@ use std::panic::AssertUnwindSafe;
 
 struct Ctx<'a> {
     env: Env,
-    factory: FluxoraFactoryClient<'a>,
+    factory: WallieDeSenseiFactoryClient<'a>,
     #[allow(dead_code)]
-    stream: FluxoraStreamClient<'a>,
+    stream: WallieDeSenseiStreamClient<'a>,
     admin: Address,
     sender: Address,
     #[allow(dead_code)]
@@ -31,12 +31,12 @@ impl<'a> Ctx<'a> {
         env.mock_all_auths();
 
         // Deploy stream contract
-        let stream_id = env.register_contract(None, FluxoraStream);
-        let stream = FluxoraStreamClient::new(&env, &stream_id);
+        let stream_id = env.register_contract(None, WallieDeSenseiStream);
+        let stream = WallieDeSenseiStreamClient::new(&env, &stream_id);
 
         // Deploy factory contract
-        let factory_id = env.register_contract(None, FluxoraFactory);
-        let factory = FluxoraFactoryClient::new(&env, &factory_id);
+        let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+        let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
 
         // Token setup
         let token_admin = Address::generate(&env);
@@ -98,8 +98,8 @@ fn test_factory_error_discriminants_are_append_only_and_stable() {
 fn test_init_rejects_zero_max_deposit() {
     let env = Env::default();
     env.mock_all_auths();
-    let factory_id = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &factory_id);
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
     let admin = Address::generate(&env);
     let stream_contract = Address::generate(&env);
 
@@ -116,8 +116,8 @@ fn test_init_rejects_zero_max_deposit() {
 fn test_init_rejects_negative_max_deposit() {
     let env = Env::default();
     env.mock_all_auths();
-    let factory_id = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &factory_id);
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
     let admin = Address::generate(&env);
     let stream_contract = Address::generate(&env);
 
@@ -160,8 +160,8 @@ fn test_set_cap_rejects_zero_and_negative_values_without_mutation() {
 fn test_init_accepts_zero_min_duration() {
     let env = Env::default();
     env.mock_all_auths();
-    let factory_id = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &factory_id);
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
     let admin = Address::generate(&env);
     let stream_contract = Address::generate(&env);
 
@@ -176,8 +176,8 @@ fn test_init_accepts_zero_min_duration() {
 fn test_init_rejects_absurd_min_duration() {
     let env = Env::default();
     env.mock_all_auths();
-    let factory_id = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &factory_id);
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
     let admin = Address::generate(&env);
     let stream_contract = Address::generate(&env);
 
@@ -247,9 +247,9 @@ fn test_factory_already_initialized() {
 fn test_set_admin_requires_existing_admin() {
     let env = Env::default();
     // Do NOT mock all auths — we want auth to fail
-    let factory_id = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &factory_id);
-    let stream_id = env.register_contract(None, FluxoraStream);
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
+    let stream_id = env.register_contract(None, WallieDeSenseiStream);
     let admin = Address::generate(&env);
     let new_admin = Address::generate(&env);
 
@@ -264,9 +264,9 @@ fn test_set_admin_requires_existing_admin() {
     // We verify the happy path instead: with mock_all_auths it succeeds
     let env2 = Env::default();
     env2.mock_all_auths();
-    let fid2 = env2.register_contract(None, FluxoraFactory);
-    let f2 = FluxoraFactoryClient::new(&env2, &fid2);
-    let sid2 = env2.register_contract(None, FluxoraStream);
+    let fid2 = env2.register_contract(None, WallieDeSenseiFactory);
+    let f2 = WallieDeSenseiFactoryClient::new(&env2, &fid2);
+    let sid2 = env2.register_contract(None, WallieDeSenseiStream);
     let a2 = Address::generate(&env2);
     let na2 = Address::generate(&env2);
     f2.init(&a2, &sid2, &10_000, &100);
@@ -284,13 +284,13 @@ fn test_factory_setters_reject_non_admin_callers() {
     }
 
     let env = Env::default();
-    let factory_id = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &factory_id);
-    let stream_contract = env.register_contract(None, FluxoraStream);
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
+    let stream_contract = env.register_contract(None, WallieDeSenseiStream);
     let admin = Address::generate(&env);
     let non_admin = Address::generate(&env);
     let new_admin = Address::generate(&env);
-    let new_stream_contract = env.register_contract(None, FluxoraStream);
+    let new_stream_contract = env.register_contract(None, WallieDeSenseiStream);
     let recipient = Address::generate(&env);
 
     env.mock_auths(&[MockAuth {
@@ -743,8 +743,8 @@ fn test_create_stream_rejects_cliff_after_end() {
 fn test_factory_not_initialized_returns_error() {
     let env = Env::default();
     env.mock_all_auths();
-    let factory_id = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &factory_id);
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
     let sender = Address::generate(&env);
     let recipient = Address::generate(&env);
     let now = env.ledger().timestamp();
@@ -769,8 +769,8 @@ fn test_factory_not_initialized_returns_error() {
 fn test_factory_setters_before_init_return_not_initialized() {
     let env = Env::default();
     env.mock_all_auths();
-    let factory_id = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &factory_id);
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
     let address = Address::generate(&env);
 
     assert_eq!(
@@ -799,8 +799,8 @@ fn test_factory_setters_before_init_return_not_initialized() {
 fn test_get_factory_config_before_init_returns_not_initialized() {
     let env = Env::default();
     env.mock_all_auths();
-    let factory_id = env.register_contract(None, FluxoraFactory);
-    let factory = FluxoraFactoryClient::new(&env, &factory_id);
+    let factory_id = env.register_contract(None, WallieDeSenseiFactory);
+    let factory = WallieDeSenseiFactoryClient::new(&env, &factory_id);
 
     let result = factory.try_get_factory_config();
     assert_eq!(result, Err(Ok(FactoryError::NotInitialized)));
@@ -820,7 +820,7 @@ fn test_get_factory_config_returns_current_policy() {
     assert_eq!(config.min_duration, 100);
 
     let new_admin = Address::generate(&ctx.env);
-    let new_stream_contract = ctx.env.register_contract(None, FluxoraStream);
+    let new_stream_contract = ctx.env.register_contract(None, WallieDeSenseiStream);
     ctx.factory.set_admin(&new_admin);
     ctx.factory.set_stream_contract(&new_stream_contract);
     ctx.factory.set_cap(&5_000);

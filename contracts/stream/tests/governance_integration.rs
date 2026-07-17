@@ -1,7 +1,7 @@
 extern crate std;
 
 use wallie_de_sensei_governance::{
-    AdminChanged, FluxoraGovernance, FluxoraGovernanceClient, GovernanceError, SignerAdded,
+    AdminChanged, WallieDeSenseiGovernance, WallieDeSenseiGovernanceClient, GovernanceError, SignerAdded,
     SignerRemoved,
 };
 use soroban_sdk::{
@@ -22,7 +22,7 @@ struct GovCtx<'a> {
     signer_a: Address,
     signer_b: Address,
     signer_c: Address,
-    client: FluxoraGovernanceClient<'a>,
+    client: WallieDeSenseiGovernanceClient<'a>,
 }
 
 impl<'a> GovCtx<'a> {
@@ -31,14 +31,14 @@ impl<'a> GovCtx<'a> {
         env.mock_all_auths();
         env.ledger().set_timestamp(1_000_000);
 
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
 
         let admin = Address::generate(&env);
         let signer_a = Address::generate(&env);
         let signer_b = Address::generate(&env);
         let signer_c = Address::generate(&env);
 
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         client.init(
             &admin,
             &vec![&env, signer_a.clone(), signer_b.clone(), signer_c.clone()],
@@ -90,8 +90,8 @@ fn test_init_duplicate_signers_errors() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, FluxoraGovernance);
-    let client = FluxoraGovernanceClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
+    let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
     let admin = Address::generate(&env);
     let signer = Address::generate(&env);
     let result = client.try_init(&admin, &vec![&env, signer.clone(), signer], &1u32);
@@ -378,10 +378,10 @@ fn test_init_rejects_zero_threshold() {
     env.mock_all_auths();
     env.ledger().set_timestamp(1_000_000);
 
-    let contract_id = env.register_contract(None, FluxoraGovernance);
+    let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
     let admin = Address::generate(&env);
     let signer = Address::generate(&env);
-    let client = FluxoraGovernanceClient::new(&env, &contract_id);
+    let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
     let result = client.try_init(&admin, &vec![&env, signer], &0u32);
     assert_eq!(result, Err(Ok(GovernanceError::InvalidThreshold)));
 }
@@ -392,11 +392,11 @@ fn test_init_rejects_threshold_above_signer_count() {
     env.mock_all_auths();
     env.ledger().set_timestamp(1_000_000);
 
-    let contract_id = env.register_contract(None, FluxoraGovernance);
+    let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
     let admin = Address::generate(&env);
     let signer_a = Address::generate(&env);
     let signer_b = Address::generate(&env);
-    let client = FluxoraGovernanceClient::new(&env, &contract_id);
+    let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
     let result = client.try_init(&admin, &vec![&env, signer_a, signer_b], &3u32);
     assert_eq!(result, Err(Ok(GovernanceError::InvalidThreshold)));
 }

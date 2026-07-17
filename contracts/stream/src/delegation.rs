@@ -1,7 +1,7 @@
 //! Delegation parameter validation for delegated-withdraw operations.
 //!
 //! This module centralises the deadline and nonce checks that guard
-//! [`FluxoraStream::delegated_withdraw`].  Extracting them here ensures:
+//! [`WallieDeSenseiStream::delegated_withdraw`].  Extracting them here ensures:
 //!
 //! - A single authoritative location for delegation security logic.
 //! - Consistent error codes (`SignatureDeadlineExpired`, `InvalidParams`) across
@@ -69,14 +69,14 @@ mod tests {
         token::Client as TokenClient,
         Address, Env,
     };
-    use crate::{FluxoraStream, FluxoraStreamClient, StreamKind};
+    use crate::{WallieDeSenseiStream, WallieDeSenseiStreamClient, StreamKind};
 
     /// Set up a minimal contract environment and return (env, client, stream_id, recipient).
-    fn setup() -> (Env, FluxoraStreamClient<'static>, u64, Address) {
+    fn setup() -> (Env, WallieDeSenseiStreamClient<'static>, u64, Address) {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin.clone())
@@ -85,7 +85,7 @@ mod tests {
         let sender = Address::generate(&env);
         let recipient = Address::generate(&env);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         client.init(&token_id, &admin);
 
         // Mint tokens to sender and approve the contract
@@ -230,7 +230,7 @@ mod tests {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin.clone())
@@ -240,7 +240,7 @@ mod tests {
         let recipient_a = Address::generate(&env);
         let recipient_b = Address::generate(&env);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         client.init(&token_id, &admin);
 
         let sac = soroban_sdk::token::StellarAssetClient::new(&env, &token_id);

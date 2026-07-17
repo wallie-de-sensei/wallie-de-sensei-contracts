@@ -46,7 +46,7 @@
 
 extern crate std;
 
-use wallie_de_sensei_governance::{FluxoraGovernance, FluxoraGovernanceClient, GovernanceError};
+use wallie_de_sensei_governance::{WallieDeSenseiGovernance, WallieDeSenseiGovernanceClient, GovernanceError};
 use proptest::prelude::*;
 use soroban_sdk::{testutils::{Address as _, Ledger}, vec, Address, Env};
 use std::collections::HashSet;
@@ -103,7 +103,7 @@ struct GovEnv {
     env: Env,
     /// All POOL_SIZE pre-generated addresses; ops reference these by index.
     pool: StdVec<Address>,
-    client: FluxoraGovernanceClient<'static>,
+    client: WallieDeSenseiGovernanceClient<'static>,
     threshold: u32,
 }
 
@@ -115,7 +115,7 @@ impl GovEnv {
         env.mock_all_auths();
         env.ledger().set_timestamp(BASE_TIMESTAMP);
 
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
 
         let mut pool: StdVec<Address> = StdVec::with_capacity(POOL_SIZE);
@@ -128,7 +128,7 @@ impl GovEnv {
             sdk_signers.push_back(addr.clone());
         }
 
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         client.init(&admin, &sdk_signers, &threshold);
 
         GovEnv { env, pool, client, threshold }
@@ -376,7 +376,7 @@ proptest! {
         env.mock_all_auths();
         env.ledger().set_timestamp(BASE_TIMESTAMP);
 
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
 
         let mut pool: StdVec<Address> = StdVec::new();
@@ -387,7 +387,7 @@ proptest! {
             pool.push(addr);
         }
 
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         client.init(&admin, &sdk_signers, &threshold);
 
         // Re-adding every registered signer must return DuplicateSigner.
@@ -419,7 +419,7 @@ proptest! {
         env.mock_all_auths();
         env.ledger().set_timestamp(BASE_TIMESTAMP);
 
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
 
         let mut sdk_signers = vec![&env];
@@ -427,7 +427,7 @@ proptest! {
             sdk_signers.push_back(Address::generate(&env));
         }
 
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         client.init(&admin, &sdk_signers, &threshold);
 
         let before = client.get_signers().len();
@@ -466,7 +466,7 @@ proptest! {
         env.mock_all_auths();
         env.ledger().set_timestamp(BASE_TIMESTAMP);
 
-        let contract_id = env.register_contract(None, FluxoraGovernance);
+        let contract_id = env.register_contract(None, WallieDeSenseiGovernance);
         let admin = Address::generate(&env);
 
         let mut pool: StdVec<Address> = StdVec::new();
@@ -477,7 +477,7 @@ proptest! {
             pool.push(addr);
         }
 
-        let client = FluxoraGovernanceClient::new(&env, &contract_id);
+        let client = WallieDeSenseiGovernanceClient::new(&env, &contract_id);
         client.init(&admin, &sdk_signers, &threshold);
 
         let n_removes = n_removes_raw.min(n);

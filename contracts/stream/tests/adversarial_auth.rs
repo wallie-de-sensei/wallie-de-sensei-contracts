@@ -2,7 +2,7 @@ extern crate std;
 
 use ed25519_dalek::{Signer, SigningKey};
 use wallie_de_sensei_stream::{
-    ContractError, FluxoraStream, FluxoraStreamClient, PauseReason, StreamStatus,
+    ContractError, WallieDeSenseiStream, WallieDeSenseiStreamClient, PauseReason, StreamStatus,
 };
 use soroban_sdk::{
     testutils::{Address as _, Ledger, MockAuth, MockAuthInvoke},
@@ -31,7 +31,7 @@ impl<'a> Ctx<'a> {
     fn setup() -> Self {
         let env = Env::default();
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin.clone())
@@ -41,7 +41,7 @@ impl<'a> Ctx<'a> {
         let sender = Address::generate(&env);
         let recipient = Address::generate(&env);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
 
         env.mock_auths(&[MockAuth {
             address: &admin,
@@ -88,8 +88,8 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    fn client(&self) -> FluxoraStreamClient<'_> {
-        FluxoraStreamClient::new(&self.env, &self.contract_id)
+    fn client(&self) -> WallieDeSenseiStreamClient<'_> {
+        WallieDeSenseiStreamClient::new(&self.env, &self.contract_id)
     }
 
     /// Create a standard 1000-unit stream (rate 1/s, 0..1000s, no cliff).
@@ -1177,7 +1177,7 @@ mod delegated_withdraw_adversarial {
     extern crate std;
 
     use ed25519_dalek::{Signer, SigningKey};
-    use wallie_de_sensei_stream::{ContractError, FluxoraStream, FluxoraStreamClient, PauseReason};
+    use wallie_de_sensei_stream::{ContractError, WallieDeSenseiStream, WallieDeSenseiStreamClient, PauseReason};
     use soroban_sdk::{
         testutils::{Address as _, Ledger, MockAuth, MockAuthInvoke},
         token::{Client as TokenClient, StellarAssetClient},
@@ -1238,7 +1238,7 @@ mod delegated_withdraw_adversarial {
             let env = Env::default();
             env.mock_all_auths();
 
-            let contract_id = env.register_contract(None, FluxoraStream);
+            let contract_id = env.register_contract(None, WallieDeSenseiStream);
             let token_admin = Address::generate(&env);
             let token_id = env
                 .register_stellar_asset_contract_v2(token_admin)
@@ -1248,7 +1248,7 @@ mod delegated_withdraw_adversarial {
             let relayer = Address::generate(&env);
             let recipient_kp = RecipientKeypair::from_seed(&env, [0x02u8; 32]);
 
-            let client = FluxoraStreamClient::new(&env, &contract_id);
+            let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
             client.init(&token_id, &admin);
 
             let sac = StellarAssetClient::new(&env, &token_id);
@@ -1266,8 +1266,8 @@ mod delegated_withdraw_adversarial {
             }
         }
 
-        fn client(&self) -> FluxoraStreamClient<'_> {
-            FluxoraStreamClient::new(&self.env, &self.contract_id)
+        fn client(&self) -> WallieDeSenseiStreamClient<'_> {
+            WallieDeSenseiStreamClient::new(&self.env, &self.contract_id)
         }
 
         fn create_stream(&self) -> u64 {
@@ -1502,7 +1502,7 @@ impl<'a> DelegatedCtx<'a> {
         env.mock_all_auths();
         env.ledger().set_timestamp(0);
 
-        let contract_id = env.register_contract(None, wallie_de_sensei_stream::FluxoraStream);
+        let contract_id = env.register_contract(None, wallie_de_sensei_stream::WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin)
@@ -1517,7 +1517,7 @@ impl<'a> DelegatedCtx<'a> {
         let recipient_pk = BytesN::from_array(&env, &pk_arr);
         let recipient = address_from_pk(&env, &pk_arr);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         client.init(&token_id, &admin);
 
         let sac = soroban_sdk::token::StellarAssetClient::new(&env, &token_id);
@@ -1554,8 +1554,8 @@ impl<'a> DelegatedCtx<'a> {
         }
     }
 
-    fn client(&self) -> FluxoraStreamClient<'_> {
-        FluxoraStreamClient::new(&self.env, &self.contract_id)
+    fn client(&self) -> WallieDeSenseiStreamClient<'_> {
+        WallieDeSenseiStreamClient::new(&self.env, &self.contract_id)
     }
 
     fn sign(&self, nonce: u64, deadline: u64, min_amount: i128) -> BytesN<64> {

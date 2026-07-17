@@ -15,7 +15,7 @@
 extern crate std;
 
 use wallie_de_sensei_stream::{
-    ContractError, FluxoraStream, FluxoraStreamClient, PauseReason, StreamCloned, StreamCreated,
+    ContractError, WallieDeSenseiStream, WallieDeSenseiStreamClient, PauseReason, StreamCloned, StreamCreated,
     StreamKind, StreamStatus,
 };
 use soroban_sdk::{
@@ -56,7 +56,7 @@ impl<'a> Ctx<'a> {
             max_entry_ttl: 6312000,
         });
 
-        let contract_id = env.register_contract(None, FluxoraStream);
+        let contract_id = env.register_contract(None, WallieDeSenseiStream);
         let token_admin = Address::generate(&env);
         let token_id = env
             .register_stellar_asset_contract_v2(token_admin.clone())
@@ -66,7 +66,7 @@ impl<'a> Ctx<'a> {
         let sender = Address::generate(&env);
         let recipient = Address::generate(&env);
 
-        let client = FluxoraStreamClient::new(&env, &contract_id);
+        let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
         client.init(&token_id, &admin);
 
         let sac = StellarAssetClient::new(&env, &token_id);
@@ -87,8 +87,8 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    fn client(&self) -> FluxoraStreamClient<'_> {
-        FluxoraStreamClient::new(&self.env, &self.contract_id)
+    fn client(&self) -> WallieDeSenseiStreamClient<'_> {
+        WallieDeSenseiStreamClient::new(&self.env, &self.contract_id)
     }
 
     /// Create a standard stream: 1000 tokens, rate=1/s, 0..1000s, no cliff.
@@ -442,7 +442,7 @@ fn clone_with_different_recipient() {
 #[test]
 fn clone_sender_authorized_strict() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin.clone())
@@ -452,7 +452,7 @@ fn clone_sender_authorized_strict() {
     let recipient = Address::generate(&env);
 
     env.mock_all_auths();
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     let sac = StellarAssetClient::new(&env, &token_id);
@@ -501,7 +501,7 @@ fn clone_sender_authorized_strict() {
 #[should_panic]
 fn clone_recipient_unauthorized() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin.clone())
@@ -511,7 +511,7 @@ fn clone_recipient_unauthorized() {
     let recipient = Address::generate(&env);
 
     env.mock_all_auths();
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     let sac = StellarAssetClient::new(&env, &token_id);
@@ -547,7 +547,7 @@ fn clone_recipient_unauthorized() {
 #[should_panic]
 fn clone_third_party_unauthorized() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, FluxoraStream);
+    let contract_id = env.register_contract(None, WallieDeSenseiStream);
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin.clone())
@@ -558,7 +558,7 @@ fn clone_third_party_unauthorized() {
     let attacker = Address::generate(&env);
 
     env.mock_all_auths();
-    let client = FluxoraStreamClient::new(&env, &contract_id);
+    let client = WallieDeSenseiStreamClient::new(&env, &contract_id);
     client.init(&token_id, &admin);
 
     let sac = StellarAssetClient::new(&env, &token_id);
